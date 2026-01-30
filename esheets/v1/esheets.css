@@ -1,3 +1,249 @@
-/*
-testcss
+/* esheets.css v1
+   Scoped stylesheet for esheets.io interactive worksheets.
+   Contract:
+   - Wrap each worksheet in: <div class="esheets"> ... </div>
+   - Use class names beginning with "es-" only.
 */
+
+.esheets{
+  --es-primary:#513094;
+  --es-primary-hover:#3e2472;
+  --es-danger:#d32f2f;
+  --es-neutral:#444;
+  --es-bg:#f9f9f9;
+  --es-card:#ffffff;
+  --es-border:#e0e0e0;
+  --es-border-2:#d6d6d6;
+  --es-text:#111;
+  --es-muted:#555;
+  --es-success:#2e7d32;
+  --es-success-bg:#e8f5e9;
+  --es-success-border:#a5d6a7;
+  --es-error:#c62828;
+
+  --es-radius:10px;
+  --es-radius-sm:6px;
+  --es-gap-1:8px;
+  --es-gap-2:12px;
+  --es-gap-3:16px;
+
+  --es-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+
+  color:var(--es-text);
+  font-family:var(--es-font);
+}
+
+.esheets .es-container{
+  width:100%;
+  max-width:900px;
+  box-sizing:border-box;
+  margin:20px 0;
+  padding:12px;
+  background:var(--es-bg);
+  border:1px solid var(--es-border);
+  border-radius:var(--es-radius);
+}
+
+.esheets .es-card{
+  background:var(--es-card);
+  border:1px solid var(--es-border-2);
+  border-radius:var(--es-radius-sm);
+  padding:14px;
+}
+
+.esheets .es-header,
+.esheets .es-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:var(--es-gap-2);
+  background:#eee;
+  border:1px solid var(--es-border);
+  border-radius:var(--es-radius-sm);
+  padding:10px 12px;
+  font-weight:700;
+}
+
+.esheets .es-title{
+  font-size:18px;
+  line-height:1.2;
+}
+
+.esheets .es-score{
+  white-space:nowrap;
+}
+
+.esheets .es-muted{ color:var(--es-muted); }
+.esheets .es-small{ font-size:0.92em; }
+
+.esheets .es-stack{ display:flex; flex-direction:column; gap:var(--es-gap-2); }
+.esheets .es-row{ display:flex; align-items:center; gap:var(--es-gap-2); }
+.esheets .es-wrap{ flex-wrap:wrap; }
+
+.esheets .es-gap-1{ gap:var(--es-gap-1); }
+.esheets .es-gap-2{ gap:var(--es-gap-2); }
+.esheets .es-gap-3{ gap:var(--es-gap-3); }
+
+.esheets .es-q{
+  background:var(--es-card);
+  border:1px solid var(--es-border-2);
+  border-radius:var(--es-radius-sm);
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+@media (min-width: 600px){
+  .esheets .es-q{
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+  }
+}
+
+.esheets .es-q-text{
+  flex:1 1 auto;
+  min-width: 220px;
+  margin-right: 12px;
+}
+
+.esheets .es-q-actions{
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+.esheets .es-input{
+  width: 92px;
+  padding:8px 10px;
+  border:1px solid #cfcfcf;
+  border-radius:6px;
+  font-size:16px;
+  box-sizing:border-box;
+}
+
+.esheets .es-input:read-only{
+  background:var(--es-success-bg);
+  color:var(--es-success);
+  border-color:var(--es-success-border);
+  font-weight:700;
+}
+
+.esheets .es-btn{
+  appearance:none;
+  border:0;
+  border-radius:8px;
+  padding:8px 14px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition: background-color .15s ease, transform .02s ease;
+  user-select:none;
+}
+
+.esheets .es-btn:active{
+  transform: translateY(1px);
+}
+
+.esheets .es-btn[disabled]{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.esheets .es-btn--primary{
+  background:var(--es-primary);
+  color:#fff;
+}
+.esheets .es-btn--primary:hover{ background:var(--es-primary-hover); }
+
+.esheets .es-btn--neutral{
+  background:var(--es-neutral);
+  color:#fff;
+}
+.esheets .es-btn--neutral:hover{ filter:brightness(1.1); }
+
+.esheets .es-btn--danger{
+  background:var(--es-danger);
+  color:#fff;
+}
+.esheets .es-btn--danger:hover{ filter:brightness(1.05); }
+
+.esheets .es-btn--wide{
+  width:100%;
+  padding:14px 16px;
+  font-size:16px;
+}
+
+.esheets .es-feedback{
+  min-width: 170px;
+  font-weight:800;
+  font-size:0.95em;
+}
+
+.esheets .es-feedback--ok{ color: var(--es-success); }
+.esheets .es-feedback--bad{ color: var(--es-error); }
+
+.esheets .es-answer{
+  margin-top:6px;
+  font-weight:700;
+}
+
+.esheets .es-teacher{
+  margin-bottom: 12px;
+}
+
+.esheets .es-teacher-panel{
+  margin-top:10px;
+  padding:12px;
+  border:1px dashed var(--es-border-2);
+  border-radius:var(--es-radius-sm);
+  background:#fff;
+}
+
+.esheets .es-no-print{ display:block; }
+.esheets .es-print-only{ display:none; }
+
+@media print{
+  .es-no-print{ display:none !important; }
+  .es-print-only{ display:block !important; }
+
+  .esheets, .esheets .es-container{
+    background:#fff !important;
+    color:#000 !important;
+    border:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+
+  .esheets .es-header, .esheets .es-footer{
+    background:#fff !important;
+    border:0 !important;
+    padding:0 0 8px 0 !important;
+  }
+
+  .esheets .es-q{
+    border:1px solid #bbb !important;
+    box-shadow:none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .esheets .es-btn{
+    display:none !important;
+  }
+
+  /* Make inputs print like blank lines */
+  .esheets input.es-input{
+    border:0 !important;
+    border-bottom:1px solid #000 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    color:#000 !important;
+    padding:0 0 2px 0 !important;
+    width: 120px !important;
+  }
+}
+
