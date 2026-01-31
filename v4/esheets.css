@@ -1,0 +1,215 @@
+/* esheets.css (v1.3 draft)
+   Global worksheet styles for esheets.io
+   Scope: everything is under .esheets to avoid Ghost theme collisions.
+*/
+
+.esheets, .esheets * { box-sizing: border-box; }
+
+.esheets {
+  --es-purple: #4b2ca3;
+  --es-purple-dark: #3c2287;
+  --es-grey-900: #222;
+  --es-grey-800: #333;
+  --es-grey-700: #444;
+  --es-grey-200: #e6e6e6;
+  --es-grey-100: #f4f4f4;
+  --es-radius: 12px;
+  --es-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: var(--es-font);
+  color: #111;
+  line-height: 1.35;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Make [hidden] always work */
+.esheets [hidden] { display: none !important; }
+
+/* Cards */
+.esheets .es-card {
+  border: 1px solid var(--es-grey-200);
+  border-radius: var(--es-radius);
+  background: #fff;
+  overflow: clip;
+}
+
+.esheets .es-card-header {
+  padding: 14px 16px;
+  background: var(--es-grey-100);
+  border-bottom: 1px solid var(--es-grey-200);
+}
+
+.esheets .es-title {
+  font-size: 22px;
+  font-weight: 750;
+  margin: 0;
+}
+
+/* Score */
+.esheets .es-score {
+  margin-top: 8px;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.esheets .es-body { padding: 14px 16px; }
+
+/* Print header: print-only by default */
+.esheets .es-print-header { display: none; }
+@media print {
+  .esheets .es-print-header {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin: 0 0 14px;
+  }
+}
+
+.esheets .es-print-line {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  min-width: 260px;
+}
+.esheets .es-print-label { font-weight: 650; }
+.esheets .es-print-blank {
+  flex: 1;
+  border-bottom: 2px solid #111;
+  height: 22px;
+}
+
+/* Teacher panel */
+.esheets .es-teacher-panel {
+  border: 1px dashed #b9b9b9;
+  border-radius: var(--es-radius);
+  padding: 12px;
+  background: #fafafa;
+  margin-bottom: 12px;
+}
+.esheets .es-teacher-note { margin: 10px 0 0; color: #555; font-size: 13px; }
+
+/* Buttons */
+.esheets button,
+.esheets .es-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.esheets .es-btn-primary { background: var(--es-purple); color: #fff; }
+.esheets .es-btn-primary:hover { background: var(--es-purple-dark); }
+
+.esheets .es-btn-neutral { background: var(--es-grey-700); color: #fff; }
+.esheets .es-btn-neutral:hover { background: var(--es-grey-800); }
+
+.esheets .es-btn-ghost {
+  background: transparent;
+  color: var(--es-grey-800);
+  border: 1px solid var(--es-grey-200);
+}
+.esheets .es-btn-ghost:hover { background: #f8f8f8; }
+
+.esheets .es-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.esheets .is-armed { outline: 3px solid rgba(75, 44, 163, 0.35); }
+
+/* Questions list */
+.esheets .es-questions { display: flex; flex-direction: column; gap: 12px; }
+
+/* Question item: vertical */
+.esheets .es-q {
+  border: 1px solid var(--es-grey-200);
+  border-radius: var(--es-radius);
+  padding: 12px;
+  background: #fff;
+}
+
+.esheets .es-q-top { display: flex; gap: 10px; align-items: baseline; }
+.esheets .es-q-num { font-weight: 800; min-width: 26px; }
+.esheets .es-q-text { flex: 1; }
+
+.esheets .es-q-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Inputs: not full width; leave room for units */
+.esheets input[type="text"],
+.esheets input[type="number"]{
+  font-size: 16px;
+  padding: 10px 10px;
+  border: 1px solid var(--es-grey-200);
+  border-radius: 10px;
+  width: 120px;
+  max-width: 200px;
+  flex: 0 0 auto;
+}
+
+.esheets .es-unit { font-weight: 800; white-space: nowrap; }
+
+.esheets .es-feedback { margin-top: 10px; font-weight: 700; }
+.esheets .es-feedback.is-correct { color: #0a7a2a; }
+.esheets .es-feedback.is-wrong { color: #b00020; }
+
+/* Answers: below */
+.esheets .es-answer {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f7f5ff;
+  border: 1px solid rgba(75, 44, 163, 0.25);
+  font-weight: 800;
+}
+
+/* Hide answers unless explicitly revealed (teacher mode only enables the toggle UI) */
+.esheets .es-answer { display: none; }
+.esheets .es-answer.is-revealed { display: block; }
+
+/* Disabled state when correct */
+.esheets .is-locked input,
+.esheets .is-locked button.es-check {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.esheets .is-locked input { background: #f6f6f6; }
+
+/* Print: print ONLY the worksheet area; hide Ghost footer/discussion/etc */
+@media print {
+  /* Hide everything by default */
+  body * { visibility: hidden !important; }
+
+  /* Show worksheet only */
+  .esheets, .esheets * { visibility: visible !important; }
+
+  /* Put worksheet at top-left for print layout */
+  .esheets {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Hide buttons by default */
+  .esheets button { display: none !important; }
+
+  /* Inputs look like boxes */
+  .esheets input { border: 1px solid #111 !important; }
+
+  /* Print header should appear */
+  .esheets .es-print-header { display: flex !important; }
+
+  /* Answers: only print if teacher AND currently revealed */
+  .esheets .es-answer { display: none !important; }
+  .esheets-teacher .esheets .es-answer.is-revealed { display: block !important; }
+}
