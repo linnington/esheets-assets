@@ -1,1 +1,48 @@
+/**
+ * ESHEETS v5 Core Styles
+ * 
+ * Namespaced styles for the ESHEETS framework.
+ */
 
+/* Score bar container/style */
+.esheets-scorebar {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 600;
+  padding: 0.5rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* Warning banner */
+.esheets-warning {
+  display: none; /* Hidden by default, toggled by JS */
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  padding: 0.75rem 1.25rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Print styles */
+@media print {
+  /* Hide buttons marked with .esheets-ui */
+  button.esheets-ui,
+  .esheets-ui {
+    display: none !important;
+  }
+
+  /* Hide the warning banner */
+  .esheets-warning {
+    display: none !important;
+  }
+  
+  /* Ensure content is readable - simple reset or existing print styles usually suffice for "keep readable" */
+  body {
+    color: #000;
+    background: #fff;
+  }
+}
