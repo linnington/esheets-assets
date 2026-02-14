@@ -81,6 +81,83 @@
         }); // Fixed missing paren
     }
 
+        function isVisible(el) {
+        if (!el) return false;
+        var r = el.getBoundingClientRect();
+        if (!r || r.width === 0 || r.height === 0) return false;
+        var style = window.getComputedStyle(el);
+        return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+    }
+
+    function parseScoreText(txt) {
+        if (!txt) return null;
+        var match = txt.match(/(\d+)\s*\/\s*(\d+)/);
+        if (!match) return null;
+
+        var val = parseInt(match[1], 10);
+        var max = parseInt(match[2], 10);
+        if (!isFinite(val) || !isFinite(max) || max <= 0) return null;
+
+        // guard against random “1/2” fractions in instructions:
+        // if you ever have max scores above this, raise it.
+        if (max > 500) return null;
+
+        return { score: val, max: max };
+    }
+
+    function findScoreElement() {
+        // Quick wins: common selectors
+        var selectors = [
+            '.score',
+            '#score',
+            '.scoreBox',
+            '.score-box',
+            '.score-container',
+            '[data-score]',
+            '[data-esheets-legacy-score]'
+        ];
+
+        for (var i = 0; i < selectors.length; i++) {
+            var el = document.querySelector(selectors[i]);
+            if (el && isVisible(el) && parseScoreText(el.textContent)) return el;
+        }
+
+        // Heuristic: visible elements containing “score” AND x / y pattern
+        var candidates = [];
+        var root = document.body || document.documentElement;
+
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+        while (walker.nextNode()) {
+            var node = walker.currentNode;
+            if (!isVisible(node)) continue;
+
+            var txt = (node.textContent || '').trim();
+            if (txt.length < 3 || txt.length > 80) continue;
+
+            var lower = txt.toLowerCase();
+            if (lower.indexOf('score') === -1) continue;
+
+            var parsed = parseScoreText(txt);
+            if (!parsed) continue;
+
+            // Penalise containers with lots of interactive elements
+            var penalty = node.querySelectorAll('input,button,select,textarea').length > 0 ? 10 : 0;
+
+            candidates.push({ el: node, penalty: penalty, len: txt.length });
+        }
+
+        if (!candidates.length) return null;
+
+        // pick shortest/cleanest candidate (usually the score line)
+        candidates.sort(function (a, b) {
+            if (a.penalty !== b.penalty) return a.penalty - b.penalty;
+            return a.len - b.len;
+        });
+
+        return candidates[0].el;
+    }
+
+
     // Internal implementation of setScore to be used by observer
     function setScoreImpl(score, maxScore) {
         if (typeof score !== 'number' || typeof maxScore !== 'number' || isNaN(score) || isNaN(maxScore)) {
@@ -131,6 +208,16 @@
     window.ESHEETS = {
         init: function (options) {
             meta = options || {};
+
+            // Try to auto-detect a legacy score display and attach observer.
+            // If a page uses a custom system, you can override by calling attachScoreObserver manually.
+            window.setTimeout(function () {
+                if (window.ESHEETS && window.ESHEETS.autoAttachScoreObserver) {
+                    window.ESHEETS.autoAttachScoreObserver();
+                }
+            }, 0);
+
+            
             if (!meta.worksheet_id) console.warn('ESHEETS: init called without worksheet_id');
 
             // Load progress - could restore UI state here if needed, 
@@ -138,6 +225,18 @@
         },
 
         setScore: setScoreImpl,
+
+                findScoreElement: function () {
+            return findScoreElement();
+        },
+
+        autoAttachScoreObserver: function () {
+            var el = findScoreElement();
+            if (!el) return null;
+            window.ESHEETS.attachScoreObserver(el);
+            return el;
+        },
+
 
         newAttempt: function () {
             if (!meta.worksheet_id) return;
