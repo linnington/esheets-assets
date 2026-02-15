@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Solving One-Step Equations</title>
+
+  <!-- v4 UI Assets Removed -->
+
+  <!-- v5 Full Framework (Local Dev) -->
+  <link rel="stylesheet" href="../v5/esheets.css">
+
+  <style>
+    /* Scoped overrides for this specific worksheet */
+    .esheets-worksheet .worksheet-container {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    /* Layout tweak: Stack question text above input row */
+    .esheets-worksheet .question-block {
+      margin-bottom: 2rem;
+    }
+
+    .esheets-worksheet .question-text {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="esheets-worksheet">
+
+    <div class="worksheet-container">
+
+      <!-- Print Name Line -->
+      <div class="es-print-name-line">Name: __________________________</div>
+
+      <!-- Identity Bar Container -->
+      <div id="identityBar"></div>
+
+      <!-- Teacher Panel Container -->
+      <div id="teacherPanel"></div>
+
+      <div data-esheets-score="top" style="font-size: 1.2em; margin-bottom: 1em;">Score: 0 / 12</div>
+
+      <div id="questions"></div>
+
+      <div data-esheets-score="bottom" style="font-size: 1.2em; margin-top: 20px;">Score: 0 / 12</div>
+
+      <!-- Submission Bar Container -->
+      <div id="submissionBar"></div>
+
+    </div>
+
+  </div>
+
+  <!-- v4 JS Removed -->
+
+  <!-- v5 JS (Local Dev) -->
+  <script src="../v5/esheets.js"></script>
+
+  <script>
+    (function () {
+      const WORKSHEET_ID = 'solving-one-step-equations';
+      const usedLetters = 'abcdefghijkmnopqrstuvwxyz';
+      let score = 0;
+      let answeredCorrectly = Array(12).fill(false);
+
+      // Store controls reference
+      let submissionControls = null;
+
+      // --- Logic ---
+
+      function getRandomLetter() {
+        return usedLetters[Math.floor(Math.random() * usedLetters.length)];
+      }
+
+      function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function createQuestionElement(index, questionText, correctAnswer) {
+        // Wrapper for block layout
+        const wrapper = document.createElement('div');
+        wrapper.className = 'question-block';
+
+        // 1. Question Text Line
+        const qTextDiv = document.createElement('div');
+        qTextDiv.className = 'question-text';
+        // Branded purple label
+        qTextDiv.innerHTML = `<strong style="color:#6f42c1;">Q${index + 1})</strong> Solve: ${questionText}`;
+        wrapper.appendChild(qTextDiv);
+
+        // 2. Input Row (.es-q-row)
+        const row = document.createElement('div');
+        row.className = 'es-q-row';
+
+        const variableMatch = questionText.match(/[a-z]/i);
+        const variable = variableMatch ? variableMatch[0] : 'x';
+
+        // Label "x ="
+        const label = document.createElement('label');
+        label.innerHTML = `${variable} = `;
+        label.style.marginRight = '0.5rem';
+        label.style.fontWeight = 'bold';
+
+        // Input (.es-input)
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'es-input';
+        input.setAttribute('aria-label', `Answer for question ${index + 1}`);
+        // Store answer for Teacher Panel
+        input.dataset.answer = correctAnswer;
+
+        // Button (.es-btn .es-btn-small .es-btn-outline)
+        const button = document.createElement('button');
+        button.className = 'es-btn es-btn-small es-btn-outline check-button';
+        button.textContent = 'Check';
+
+        // Feedback (.es-feedback)
+        const feedback = document.createElement('span');
+        feedback.className = 'es-feedback';
+
+        button.addEventListener('click', function () {
+          const userAnswer = parseInt(input.value, 10);
+
+          if (userAnswer === correctAnswer) {
+            // Correct Logic
+            if (!answeredCorrectly[index]) {
+              score++;
+              answeredCorrectly[index] = true;
+              updateScore();
+            }
+
+            input.disabled = true;
+            button.style.display = 'none';
+            feedback.innerHTML = '<span class="es-pill es-pill-correct">Correct</span>';
+
+          } else {
+            // Incorrect Logic
+            feedback.innerHTML = '<span class="es-pill es-pill-wrong">Try again</span>';
+          }
+        });
+
+        row.appendChild(label);
+        row.appendChild(input);
+        row.appendChild(button);
+        row.appendChild(feedback);
+
+        wrapper.appendChild(row);
+        return wrapper;
+      }
+
+      function generateWorksheet() {
+        const container = document.getElementById('questions');
+        container.innerHTML = '';
+        score = 0;
+        answeredCorrectly = Array(12).fill(false);
+        updateScore(); // Will reset controls state if mounted
+
+        const questions = [];
+
+        for (let i = 0; i < 3; i++) {
+          const a = getRandomInt(1, 10);
+          const x = getRandomInt(1, 10);
+          const b = a + x;
+          const letter = getRandomLetter();
+          questions.push({ text: `${letter} + ${a} = ${b}`, answer: x });
+        }
+        for (let i = 3; i < 6; i++) {
+          const b = getRandomInt(1, 10);
+          const a = getRandomInt(1, 10);
+          const x = a + b;
+          const letter = getRandomLetter();
+          questions.push({ text: `${letter} - ${a} = ${b}`, answer: x });
+        }
+        for (let i = 6; i < 9; i++) {
+          const x = getRandomInt(1, 10);
+          const a = getRandomInt(2, 10);
+          const b = a * x;
+          const letter = getRandomLetter();
+          questions.push({ text: `${a}${letter} = ${b}`, answer: x });
+        }
+        for (let i = 9; i < 12; i++) {
+          const b = getRandomInt(1, 10);
+          const a = getRandomInt(2, 10);
+          const x = a * b;
+          const letter = getRandomLetter();
+          questions.push({ text: `${letter} &divide; ${a} = ${b}`, answer: x });
+        }
+
+        questions.forEach((q, idx) => {
+          const qElement = createQuestionElement(idx, q.text, q.answer);
+          container.appendChild(qElement);
+        });
+      }
+
+      function updateScore() {
+        if (typeof ESHEETS !== 'undefined') {
+          ESHEETS.setScore(score, 12);
+        }
+        if (submissionControls && typeof submissionControls.updateState === 'function') {
+          submissionControls.updateState(score);
+        }
+      }
+
+      // --- ESHEETS Wiring ---
+
+      window.generateWorksheet = generateWorksheet;
+
+      function addOnLoad(newFunction) {
+        const oldOnLoad = window.onload;
+        window.onload = typeof oldOnLoad === 'function'
+          ? function () { oldOnLoad(); newFunction(); }
+          : newFunction;
+      }
+
+      addOnLoad(function () {
+        if (typeof ESHEETS !== 'undefined') {
+          ESHEETS.init({ worksheet_id: WORKSHEET_ID });
+
+          // Mount Identity Bar
+          ESHEETS.mountIdentityBar({
+            containerEl: document.getElementById('identityBar'),
+            fields: { first_name: true, last_name: true, class_code: true },
+            queryPrefill: {
+              class_code: { paramAnyOf: ["class", "classcode", "code"] },
+              first_name: { paramAnyOf: ["first", "firstname", "fname"] },
+              last_name: { paramAnyOf: ["last", "lastname", "lname"] },
+              name: { paramAnyOf: ["name"] }
+            }
+          });
+
+          // Mount Submission Bar
+          const barContainer = document.getElementById('submissionBar');
+          if (barContainer && typeof ESHEETS.mountSubmissionBar === 'function') {
+            submissionControls = ESHEETS.mountSubmissionBar({
+              containerEl: barContainer,
+              worksheet_id: WORKSHEET_ID,
+              getScore: function () {
+                const buttons = document.querySelectorAll('.check-button');
+                buttons.forEach(function (btn) {
+                  if (!btn.disabled && btn.style.display !== 'none') btn.click();
+                });
+                return { score: score, maxScore: 12 };
+              },
+              onNewQuestions: function () {
+                generateWorksheet();
+              }
+            });
+          }
+
+          // Mount Teacher Panel
+          const teacherPanelContainer = document.getElementById('teacherPanel');
+          if (teacherPanelContainer && typeof ESHEETS.mountTeacherPanel === 'function') {
+            ESHEETS.mountTeacherPanel({
+              containerEl: teacherPanelContainer,
+              unlock: { queryParamAnyOf: ["teacher", "mode"], allowValues: ["1", "teacher"] },
+              getAnswerItems: function () {
+                return Array.from(document.querySelectorAll(".es-q-row")).map(function (row) {
+                  const input = row.querySelector("input[data-answer]");
+                  const btn = row.querySelector("button.check-button");
+                  const feedback = row.querySelector(".es-feedback");
+                  return input ? { inputEl: input, answer: input.dataset.answer, feedbackEl: feedback, checkBtnEl: btn } : null;
+                }).filter(Boolean);
+              }
+            });
+          }
+        }
+
+        generateWorksheet();
+      });
+
+    })();
+  </script>
+
+</body>
+
+</html>

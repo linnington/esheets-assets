@@ -1,52 +1,445 @@
-/* CANONICAL v5 — 2026-02-15 — Synced core styles */
+/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-15 */
 
 /**
- * ESHEETS v5 Core Styles
+ * ESHEETS v5 Core Styles (Generic)
  * 
- * Namespaced styles for the ESHEETS framework.
+ * Must work site-wide without affecting other elements.
+ * All rules MUST be scoped under .esheets-worksheet
  */
 
-/* Score bar container/style */
-.esheets-scorebar {
+/* --- Base Scoping --- */
+.esheets-worksheet {
   font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.5;
+  color: #212529;
+}
+
+.esheets-worksheet * {
+  box-sizing: border-box;
+}
+
+/* --- Score Displays (Top/Bottom) --- */
+.esheets-worksheet [data-esheets-score] {
   font-weight: 600;
-  padding: 0.5rem;
+  color: #495057;
+}
+
+.esheets-worksheet .esheets-scorebar {
+  padding: 0.5rem 1rem;
   background-color: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 4px;
   text-align: center;
-}
-
-/* Warning banner */
-.esheets-warning {
-  display: none;
-  /* Hidden by default, toggled by JS */
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeeba;
-  padding: 0.75rem 1.25rem;
   margin: 1rem 0;
-  border-radius: 4px;
-  font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* Print styles */
+/* --- Submission Bar (Bottom Control Panel) --- */
+.esheets-worksheet .esheets-submission-bar {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 2px solid #e9ecef;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.esheets-worksheet .esheets-submission-bar .esheets-btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+/* --- Identity Bar --- */
+.esheets-worksheet .esheets-identity-bar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.esheets-worksheet .esheets-identity-bar>div {
+  display: flex;
+  align-items: center;
+}
+
+.esheets-worksheet .esheets-identity-bar label {
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+/* --- Buttons (Scoped System) --- */
+
+/* Base Button */
+.esheets-worksheet .es-btn,
+.esheets-worksheet .esheets-btn {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background-color: #e9ecef;
+  color: #212529;
+  transition: all 0.2s ease-in-out;
+  line-height: 1.5;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  user-select: none;
+}
+
+/* Base Hover */
+.esheets-worksheet .es-btn:hover:not(:disabled),
+.esheets-worksheet .esheets-btn:hover:not(:disabled) {
+  background-color: #dde2e6;
+  text-decoration: none;
+}
+
+/* Base Focus */
+.esheets-worksheet .es-btn:focus,
+.esheets-worksheet .esheets-btn:focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+}
+
+/* Primary Variant (Brand Purple) */
+.esheets-worksheet .es-btn-primary,
+.esheets-worksheet .esheets-btn-primary {
+  background-color: #6f42c1;
+  color: white;
+  border-color: #6f42c1;
+}
+
+.esheets-worksheet .es-btn-primary:hover:not(:disabled),
+.esheets-worksheet .esheets-btn-primary:hover:not(:disabled) {
+  background-color: #5a32b1;
+  border-color: #532da8;
+}
+
+.esheets-worksheet .es-btn-primary:focus,
+.esheets-worksheet .esheets-btn-primary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.5);
+}
+
+/* Secondary Variant */
+.esheets-worksheet .es-btn-secondary,
+.esheets-worksheet .esheets-btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.esheets-worksheet .es-btn-secondary:hover:not(:disabled),
+.esheets-worksheet .esheets-btn-secondary:hover:not(:disabled) {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+.esheets-worksheet .es-btn-secondary:focus,
+.esheets-worksheet .esheets-btn-secondary:focus {
+  box-shadow: 0 0 0 0.2rem rgba(130, 138, 145, 0.5);
+}
+
+/* Small Variant */
+.esheets-worksheet .es-btn-small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-radius: 0.2rem;
+}
+
+/* Disabled State */
+.esheets-worksheet .es-btn:disabled,
+.esheets-worksheet .es-btn.disabled,
+.esheets-worksheet .esheets-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* --- Confirmation UI (In-page) --- */
+.esheets-worksheet .esheets-confirm-ui {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  /* Warning yellow background */
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  color: #856404;
+  animation: esheets-fade-in 0.3s ease-out;
+}
+
+.esheets-worksheet .esheets-confirm-ui p {
+  margin: 0 0 1rem 0;
+  font-weight: 500;
+}
+
+/* --- Submission Summary --- */
+.esheets-worksheet .esheets-summary {
+  margin-top: 1rem;
+  font-size: 0.9em;
+  color: #495057;
+  border-top: 1px solid #dee2e6;
+  padding-top: 0.75rem;
+}
+
+.esheets-worksheet .esheets-summary div {
+  margin: 0.25rem 0;
+}
+
+/* --- Locked / Correct Inputs --- */
+.esheets-worksheet input:disabled {
+  background-color: #e9ecef;
+  color: #495057;
+  cursor: not-allowed;
+  border-color: #ced4da;
+}
+
+/* --- Teacher Panel -- */
+.esheets-worksheet .esheets-teacher-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  margin-top: 2rem;
+  background-color: #fff3cd;
+  /* Distinct yellow background */
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+}
+
+.esheets-worksheet .esheets-teacher-panel .es-tp-header {
+  font-weight: bold;
+  color: #856404;
+}
+
+.esheets-worksheet .esheets-teacher-panel .es-tp-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.esheets-worksheet .esheets-teacher-panel button {
+  font-size: 0.9em;
+  padding: 0.4rem 0.8rem;
+}
+
+/* --- Utility Animations --- */
+@keyframes esheets-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Per-Question UI (Subtle/Teacher-friendly) --- */
+
+/* Question Row Layout */
+.esheets-worksheet .es-q-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Styled Input */
+.esheets-worksheet .es-input {
+  display: inline-block;
+  padding: 0.375rem 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  min-width: 4em;
+}
+
+.esheets-worksheet .es-input:focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: #bfaee3;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+}
+
+.esheets-worksheet .es-input:disabled {
+  background-color: #e9ecef;
+  opacity: 1;
+}
+
+/* Outline Button */
+.esheets-worksheet .es-btn-outline {
+  color: #6c757d;
+  background-color: transparent;
+  background-image: none;
+  border-color: #6c757d;
+}
+
+.esheets-worksheet .es-btn-outline:hover:not(:disabled) {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.esheets-worksheet .es-btn-outline:focus,
+.esheets-worksheet .es-btn-outline:active {
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.5);
+}
+
+.esheets-worksheet .es-btn-outline:disabled {
+  color: #6c757d;
+  background-color: transparent;
+}
+
+/* Status Pill */
+.esheets-worksheet .es-pill {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 10rem;
+}
+
+.esheets-worksheet .es-pill-correct {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.esheets-worksheet .es-pill-wrong {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+/* Feedback Layout */
+.esheets-worksheet .es-feedback {
+  margin-left: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9em;
+}
+
+.esheets-worksheet .es-muted {
+  color: #6c757d;
+}
+
+/* --- Identity Input States --- */
+
+.esheets-worksheet .es-input.es-invalid {
+  border-color: #dc3545;
+}
+
+.esheets-worksheet .es-input.es-invalid:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.esheets-worksheet .es-input.es-readonly {
+  background-color: #f3f0fa;
+  /* Light purple tint */
+  cursor: text;
+}
+
+.esheets-worksheet .es-input.es-readonly:focus {
+  box-shadow: none;
+  border-color: #ced4da;
+}
+
+/* --- Print Styles --- */
 @media print {
 
-  /* Hide buttons marked with .esheets-ui */
-  button.esheets-ui,
-  .esheets-ui {
+  /* Hide typical interactive elements */
+  .esheets-worksheet .esheets-submission-bar,
+  .esheets-worksheet button {
     display: none !important;
   }
 
-  /* Hide the warning banner */
-  .esheets-warning {
+  /* Teacher Panel: Default HIDDEN */
+  .esheets-worksheet .esheets-teacher-panel {
     display: none !important;
   }
 
-  /* Ensure content is readable - simple reset or existing print styles usually suffice for "keep readable" */
-  body {
+  /* Teacher Panel: VISIBLE if teacher mode is ON */
+  :root.esheets-teacher .esheets-worksheet .esheets-teacher-panel {
+    display: flex !important;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    /* Adjusted for top position */
+  }
+
+  /* When printing in teacher mode, hide the actions but show the "Teacher Mode" label */
+  :root.esheets-teacher .esheets-worksheet .esheets-teacher-panel .es-tp-actions {
+    display: none !important;
+  }
+
+  :root.esheets-teacher .esheets-worksheet .esheets-teacher-panel .es-tp-header {
+    display: block !important;
+    font-size: 1.2em;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 0.5rem;
     color: #000;
-    background: #fff;
   }
+
+  /* Force revealed answers to print clearly */
+  .esheets-worksheet .es-input.es-revealed {
+    border-color: #000 !important;
+    background-color: #fff !important;
+    color: #000 !important;
+    font-weight: bold;
+  }
+
+  /* Print Name Line */
+  .es-print-name-line {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.2rem;
+    font-family: sans-serif;
+  }
+
+  .esheets-worksheet {
+    border: none !important;
+    background: white !important;
+  }
+}
+
+/* Screen styles for name line (Hidden) */
+.es-print-name-line {
+  display: none;
+}
+
+/* Teacher Panel Close Button */
+.esheets-worksheet .esheets-teacher-panel .es-btn-outline {
+  background: transparent;
+  border: 1px solid #ccc;
+  color: #666;
+  padding: 2px 8px;
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+.esheets-worksheet .esheets-teacher-panel .es-btn-outline:hover {
+  background: #eee;
+  color: #333;
+  border-color: #999;
 }
