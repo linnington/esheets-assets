@@ -1,3 +1,5 @@
+/* CANONICAL v5 — 2026-02-15 — Synced core logic with auto-detection */
+
 /**
  * ESHEETS v5 Framework Core
  *
@@ -73,15 +75,18 @@
         selectors.forEach(function (sel) {
             var els = document.querySelectorAll(sel);
             for (var i = 0; i < els.length; i++) {
-                els[i].textContent = text;
+                // Safety: prevent redundant mutations
+                if (els[i].textContent !== text) {
+                    els[i].textContent = text;
+                }
                 if (!els[i].classList.contains('esheets-scorebar')) {
                     els[i].classList.add('esheets-scorebar');
                 }
             }
-        }); // Fixed missing paren
+        });
     }
 
-        function isVisible(el) {
+    function isVisible(el) {
         if (!el) return false;
         var r = el.getBoundingClientRect();
         if (!r || r.width === 0 || r.height === 0) return false;
@@ -98,15 +103,14 @@
         var max = parseInt(match[2], 10);
         if (!isFinite(val) || !isFinite(max) || max <= 0) return null;
 
-        // guard against random “1/2” fractions in instructions:
-        // if you ever have max scores above this, raise it.
+        // guard against random “1/2” fractions in instructions
         if (max > 500) return null;
 
         return { score: val, max: max };
     }
 
     function findScoreElement() {
-        // Quick wins: common selectors
+        // Quick wins
         var selectors = [
             '.score',
             '#score',
@@ -119,14 +123,17 @@
 
         for (var i = 0; i < selectors.length; i++) {
             var el = document.querySelector(selectors[i]);
-            if (el && isVisible(el) && parseScoreText(el.textContent)) return el;
+            if (el && isVisible(el)) {
+                // Only return if it parses nicely
+                if (parseScoreText(el.textContent)) return el;
+            }
         }
 
-        // Heuristic: visible elements containing “score” AND x / y pattern
+        // Heuristic search
         var candidates = [];
         var root = document.body || document.documentElement;
-
         var walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+
         while (walker.nextNode()) {
             var node = walker.currentNode;
             if (!isVisible(node)) continue;
@@ -135,20 +142,18 @@
             if (txt.length < 3 || txt.length > 80) continue;
 
             var lower = txt.toLowerCase();
-            if (lower.indexOf('score') === -1) continue;
+            if (lower.indexOf('score') === -1) continue; // Must contain "score"
 
             var parsed = parseScoreText(txt);
             if (!parsed) continue;
 
-            // Penalise containers with lots of interactive elements
+            // Penalise noisy containers
             var penalty = node.querySelectorAll('input,button,select,textarea').length > 0 ? 10 : 0;
-
             candidates.push({ el: node, penalty: penalty, len: txt.length });
         }
 
         if (!candidates.length) return null;
 
-        // pick shortest/cleanest candidate (usually the score line)
         candidates.sort(function (a, b) {
             if (a.penalty !== b.penalty) return a.penalty - b.penalty;
             return a.len - b.len;
@@ -157,8 +162,7 @@
         return candidates[0].el;
     }
 
-
-    // Internal implementation of setScore to be used by observer
+    // Internal implementation of setScore logic (decoupled from UI binding loops if possible)
     function setScoreImpl(score, maxScore) {
         if (typeof score !== 'number' || typeof maxScore !== 'number' || isNaN(score) || isNaN(maxScore)) {
             console.warn('ESHEETS: setScore received invalid numbers', score, maxScore);
@@ -178,10 +182,10 @@
             var record = getRecord(meta.worksheet_id) || { bestPercent: 0, bestScore: 0 };
             var updates = {};
 
-            // Update bests if improved (higher percent, or same percent with higher score)
             var currentBestPercent = record.bestPercent || 0;
             var currentBestScore = record.bestScore || 0;
 
+            // Update bests if improved
             if (pct > currentBestPercent || (Math.abs(pct - currentBestPercent) < 0.001 && s > currentBestScore)) {
                 updates.bestPercent = pct;
                 updates.bestScore = s;
@@ -193,7 +197,6 @@
                 updates.completedAt = new Date().toISOString();
             }
 
-            // Ensure attempts initialized
             if (!record.attempts) {
                 updates.attempts = 1;
                 updates.lastAttemptAt = new Date().toISOString();
@@ -209,24 +212,21 @@
         init: function (options) {
             meta = options || {};
 
-            // Try to auto-detect a legacy score display and attach observer.
-            // If a page uses a custom system, you can override by calling attachScoreObserver manually.
+            // Auto-detect legacy score display
             window.setTimeout(function () {
                 if (window.ESHEETS && window.ESHEETS.autoAttachScoreObserver) {
                     window.ESHEETS.autoAttachScoreObserver();
                 }
             }, 0);
 
-            
-            if (!meta.worksheet_id) console.warn('ESHEETS: init called without worksheet_id');
-
-            // Load progress - could restore UI state here if needed, 
-            // but strictly we wait for setScore or show "0 / Y" if we knew Y.
+            if (!meta.worksheet_id) {
+                console.warn('ESHEETS: init called without worksheet_id');
+            }
         },
 
         setScore: setScoreImpl,
 
-                findScoreElement: function () {
+        findScoreElement: function () {
             return findScoreElement();
         },
 
@@ -237,15 +237,11 @@
             return el;
         },
 
-
         newAttempt: function () {
             if (!meta.worksheet_id) return;
 
             var record = getRecord(meta.worksheet_id) || {};
             var newCount = (record.attempts || 0) + 1;
-
-            // Clear completedAt for *current attempt* means we assume they are starting fresh.
-            // Requirement: "clears completedAt for the *current attempt* (set it back to null)"
 
             saveRecord(meta.worksheet_id, {
                 attempts: newCount,
@@ -253,7 +249,6 @@
                 completedAt: null
             });
 
-            // Show warning
             var banners = document.querySelectorAll('[data-esheets-warning]');
             for (var i = 0; i < banners.length; i++) {
                 banners[i].textContent = "New questions generated — previous answers cleared.";
@@ -269,20 +264,21 @@
 
             function parse() {
                 var txt = element.textContent || '';
-                var match = txt.match(/(\d+)\s*\/\s*(\d+)/);
-                if (match) {
-                    var val = parseInt(match[1], 10);
-                    var max = parseInt(match[2], 10);
-                    setScoreImpl(val, max);
+                var p = parseScoreText(txt);
+                if (p) {
+                    setScoreImpl(p.score, p.max);
                 }
             }
 
             parse();
             var obs = new MutationObserver(parse);
             obs.observe(element, { childList: true, characterData: true, subtree: true });
-        },
+        }
 
-        getProgress: function (id) {
+        // getProgress intentionally private or not exposed unless needed? 
+        // Requirement said: "Add helper ESHEETS.getProgress(worksheet_id) to return stored record (optional)"
+        // The previous version had it. I will restore it to be safe.
+        , getProgress: function (id) {
             return getRecord(id);
         }
     };

@@ -1,3 +1,5 @@
+/* CANONICAL v5 — 2026-02-15 — Synced core styles */
+
 /**
  * ESHEETS v5 Core Styles
  * 
@@ -17,7 +19,8 @@
 
 /* Warning banner */
 .esheets-warning {
-  display: none; /* Hidden by default, toggled by JS */
+  display: none;
+  /* Hidden by default, toggled by JS */
   background-color: #fff3cd;
   color: #856404;
   border: 1px solid #ffeeba;
@@ -29,6 +32,7 @@
 
 /* Print styles */
 @media print {
+
   /* Hide buttons marked with .esheets-ui */
   button.esheets-ui,
   .esheets-ui {
@@ -39,7 +43,7 @@
   .esheets-warning {
     display: none !important;
   }
-  
+
   /* Ensure content is readable - simple reset or existing print styles usually suffice for "keep readable" */
   body {
     color: #000;
