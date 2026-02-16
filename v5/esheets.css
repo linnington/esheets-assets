@@ -1,4 +1,4 @@
-/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 01:25 */
+/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 09:17 */
 
 /**
  * ESHEETS v5 Core Styles (Generic)
@@ -270,10 +270,7 @@
   gap: 0.5rem;
 }
 
-.esheets-worksheet .esheets-teacher-panel button {
-  font-size: 0.9em;
-  padding: 0.4rem 0.8rem;
-}
+
 
 /* --- Utility Animations --- */
 @keyframes esheets-fade-in {
@@ -310,6 +307,10 @@
   margin-top: 10px;
   font-size: 1.2rem;
   /* Larger row text */
+}
+
+.esheets-worksheet .es-q-row label {
+  font-size: 1.05em;
 }
 
 /* Styled Input - Increased Sizing (46px height) */
@@ -351,7 +352,6 @@
   background-color: transparent;
   background-image: none;
   border-color: #6c757d;
-  padding: 0.4rem 0.8rem;
 }
 
 .esheets-worksheet .es-btn-outline:hover:not(:disabled) {
