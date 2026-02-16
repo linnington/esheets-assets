@@ -1,4 +1,4 @@
-/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 10:00 */
+/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 10:10 */
 
 /**
  * ESHEETS v5 Core Styles (Generic)
@@ -26,14 +26,14 @@
 
 /* --- Score Displays (Top/Bottom) --- */
 .esheets-worksheet [data-esheets-score] {
-  font-weight: 600;
+  font-weight: 700;
   color: #495057;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   /* Consistent with base or slightly larger if needed, but 1.3rem is already large */
 }
 
 .esheets-worksheet .esheets-scorebar {
-  padding: 0.9rem 1.5rem;
+  padding: 1.1rem 1.6rem;
   background-color: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 4px;
