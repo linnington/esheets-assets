@@ -79,12 +79,17 @@
 
 /* --- Buttons (Scoped System) --- */
 
-/* Base Button - Increased Sizing */
+/* Base Button - Strong Selector & Sizing */
+.esheets-worksheet button,
 .esheets-worksheet .es-btn,
 .esheets-worksheet .esheets-btn {
   font-family: inherit;
-  font-size: 1.1rem;
-  padding: 0.6rem 1.2rem;
+  font-size: 1.05rem !important;
+  /* Force override Ghost theme */
+  padding: 12px 18px !important;
+  /* Force override Ghost theme */
+  min-height: 44px;
+  /* Touch target */
   cursor: pointer;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -100,6 +105,7 @@
 }
 
 /* Base Hover */
+.esheets-worksheet button:hover:not(:disabled),
 .esheets-worksheet .es-btn:hover:not(:disabled),
 .esheets-worksheet .esheets-btn:hover:not(:disabled) {
   background-color: #dde2e6;
@@ -107,6 +113,7 @@
 }
 
 /* Base Focus */
+.esheets-worksheet button:focus,
 .esheets-worksheet .es-btn:focus,
 .esheets-worksheet .esheets-btn:focus {
   outline: 0;
@@ -151,10 +158,11 @@
   box-shadow: 0 0 0 0.25rem rgba(130, 138, 145, 0.5);
 }
 
-/* Small Variant */
+/* Small Variant - Override Base */
 .esheets-worksheet .es-btn-small {
-  padding: 0.35rem 0.75rem;
-  font-size: 1rem;
+  padding: 6px 12px !important;
+  font-size: 0.95rem !important;
+  min-height: 32px;
   line-height: 1.5;
   border-radius: 4px;
 }
