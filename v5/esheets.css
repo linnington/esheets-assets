@@ -1,4 +1,4 @@
-/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 09:17 */
+/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 09:51 */
 
 /**
  * ESHEETS v5 Core Styles (Generic)
@@ -12,7 +12,7 @@
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   color: #212529;
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   /* Increased base size for readability */
   width: 100%;
   max-width: 1000px;
@@ -28,7 +28,7 @@
 .esheets-worksheet [data-esheets-score] {
   font-weight: 600;
   color: #495057;
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   /* Consistent with base or slightly larger if needed, but 1.3rem is already large */
 }
 
@@ -131,9 +131,9 @@
 .esheets-worksheet .es-q-row .es-btn,
 .esheets-worksheet .es-question-actions button,
 .esheets-worksheet .answer-row button.es-btn {
-  font-size: 1.25rem !important;
-  padding: 14px 20px !important;
-  min-height: 55px !important;
+  font-size: 1.1em !important;
+  padding: 12px 18px !important;
+  min-height: 52px !important;
   /* Match Input Height */
   border-radius: 6px;
 }
@@ -229,7 +229,8 @@
 /* --- Submission Summary --- */
 .esheets-worksheet .esheets-summary {
   margin-top: 1.5rem;
-  font-size: 1.2rem;
+  font-size: 1.1em;
+  line-height: 1.4;
   color: #495057;
   border-top: 1px solid #dee2e6;
   padding-top: 1rem;
@@ -310,7 +311,8 @@
 }
 
 .esheets-worksheet .es-q-row label {
-  font-size: 1.05em;
+  font-size: 1.15em !important;
+  font-weight: 700;
 }
 
 /* Styled Input - Increased Sizing (46px height) */
@@ -319,7 +321,7 @@
 .esheets-worksheet input[type="number"] {
   display: inline-block;
   padding: 12px 14px !important;
-  font-size: 1.3rem !important;
+  font-size: 1.1em !important;
   font-family: inherit;
   line-height: 1.5;
   color: #495057;
@@ -329,7 +331,7 @@
   border-radius: 4px;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   min-width: 5em;
-  min-height: 55px !important;
+  min-height: 52px !important;
   /* iPad friendly touch target */
 }
 
