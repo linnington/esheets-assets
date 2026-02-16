@@ -1,4 +1,4 @@
-/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 00:25 */
+/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 00:40 */
 
 /**
  * ESHEETS v5 Core Styles (Generic)
@@ -103,14 +103,19 @@
 }
 
 /* 2. PRIMARY ACTION BUTTONS (Submission Bar) */
-/* Targets buttons specifically inside the submission bar */
-.esheets-worksheet .esheets-submission-bar button,
-.esheets-worksheet .esheets-submission-bar .es-btn {
-  font-size: 1.15rem !important;
-  padding: 14px 24px !important;
-  min-height: 48px !important;
+/* Targets buttons specifically inside the submission bar with high specificity */
+.esheets-worksheet #submissionBar button,
+.esheets-worksheet #submissionBar a,
+.esheets-worksheet #submissionBar .es-btn,
+.esheets-worksheet #submissionBar .esheets-btn,
+.esheets-worksheet #submissionBar [role="button"],
+.esheets-worksheet #submissionBar input[type="button"],
+.esheets-worksheet #submissionBar input[type="submit"] {
+  font-size: 1.2rem !important;
+  padding: 16px 26px !important;
+  min-height: 52px !important;
+  border-radius: 10px !important;
   line-height: 1.1 !important;
-  border-radius: 8px !important;
 }
 
 /* 3. STANDARD BUTTONS (Check buttons, etc) */
