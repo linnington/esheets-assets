@@ -79,29 +79,57 @@
 
 /* --- Buttons (Scoped System) --- */
 
-/* Base Button - Strong Selector & Sizing */
+/* 
+   Button Strategy: 
+   Use !important on critical metrics (size, padding) to ensure Ghost themes 
+   do not override them with tiny blog-style button defaults.
+*/
+
+/* 1. Base Reset & Shared Styles */
 .esheets-worksheet button,
 .esheets-worksheet .es-btn,
 .esheets-worksheet .esheets-btn {
   font-family: inherit;
-  font-size: 1.05rem !important;
-  /* Force override Ghost theme */
-  padding: 12px 18px !important;
-  /* Force override Ghost theme */
-  min-height: 44px;
-  /* Touch target */
   cursor: pointer;
   border: 1px solid transparent;
-  border-radius: 6px;
   background-color: #e9ecef;
   color: #212529;
   transition: all 0.2s ease-in-out;
-  line-height: 1.5;
   display: inline-block;
   text-align: center;
   text-decoration: none;
   vertical-align: middle;
   user-select: none;
+}
+
+/* 2. PRIMARY ACTION BUTTONS (Submission Bar) */
+/* Targets buttons specifically inside the submission bar */
+.esheets-worksheet .esheets-submission-bar button,
+.esheets-worksheet .esheets-submission-bar .es-btn {
+  font-size: 1.15rem !important;
+  padding: 14px 24px !important;
+  min-height: 48px !important;
+  line-height: 1.1 !important;
+  border-radius: 8px !important;
+}
+
+/* 3. STANDARD BUTTONS (Check buttons, etc) */
+/* Base button style for everything else */
+.esheets-worksheet button,
+.esheets-worksheet .es-btn,
+.esheets-worksheet .esheets-btn {
+  font-size: 1.0rem !important;
+  padding: 10px 14px !important;
+  min-height: 42px !important;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+/* Small Variant - Explicit Override if needed */
+.esheets-worksheet .es-btn-small {
+  padding: 8px 12px !important;
+  font-size: 0.95rem !important;
+  min-height: 36px !important;
 }
 
 /* Base Hover */
@@ -156,15 +184,6 @@
 .esheets-worksheet .es-btn-secondary:focus,
 .esheets-worksheet .esheets-btn-secondary:focus {
   box-shadow: 0 0 0 0.25rem rgba(130, 138, 145, 0.5);
-}
-
-/* Small Variant - Override Base */
-.esheets-worksheet .es-btn-small {
-  padding: 6px 12px !important;
-  font-size: 0.95rem !important;
-  min-height: 32px;
-  line-height: 1.5;
-  border-radius: 4px;
 }
 
 /* Disabled State */
