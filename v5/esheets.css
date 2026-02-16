@@ -12,7 +12,7 @@
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   color: #212529;
-  font-size: 1.3rem;
+  font-size: 1.6rem;
   /* Increased base size for readability */
   width: 100%;
   max-width: 1000px;
@@ -28,12 +28,12 @@
 .esheets-worksheet [data-esheets-score] {
   font-weight: 600;
   color: #495057;
-  font-size: 1.3rem;
+  font-size: 1.6rem;
   /* Consistent with base or slightly larger if needed, but 1.3rem is already large */
 }
 
 .esheets-worksheet .esheets-scorebar {
-  padding: 0.75rem 1.25rem;
+  padding: 0.9rem 1.5rem;
   background-color: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 4px;
@@ -106,9 +106,9 @@
 .esheets-worksheet #submissionBar [role="button"],
 .esheets-worksheet #submissionBar input[type="button"],
 .esheets-worksheet #submissionBar input[type="submit"] {
-  font-size: 1.2rem !important;
-  padding: 16px 26px !important;
-  min-height: 52px !important;
+  font-size: 1.5rem !important;
+  padding: 19px 31px !important;
+  min-height: 62px !important;
   border-radius: 10px !important;
   line-height: 1.1 !important;
 }
@@ -118,9 +118,9 @@
 .esheets-worksheet button,
 .esheets-worksheet .es-btn,
 .esheets-worksheet .esheets-btn {
-  font-size: 1.05rem !important;
-  padding: 12px 16px !important;
-  min-height: 46px !important;
+  font-size: 1.25rem !important;
+  padding: 14px 20px !important;
+  min-height: 55px !important;
   border-radius: 6px;
   line-height: 1.5;
 }
@@ -131,18 +131,18 @@
 .esheets-worksheet .es-q-row .es-btn,
 .esheets-worksheet .es-question-actions button,
 .esheets-worksheet .answer-row button.es-btn {
-  font-size: 1.05rem !important;
-  padding: 12px 16px !important;
-  min-height: 46px !important;
+  font-size: 1.25rem !important;
+  padding: 14px 20px !important;
+  min-height: 55px !important;
   /* Match Input Height */
   border-radius: 6px;
 }
 
 /* Small Variant - Explicit Override if needed for truly tiny buttons elsewhere */
 .esheets-worksheet .es-btn-small {
-  padding: 8px 12px !important;
-  font-size: 1rem !important;
-  min-height: 38px !important;
+  padding: 10px 14px !important;
+  font-size: 1.2rem !important;
+  min-height: 46px !important;
 }
 
 /* Base Hover */
@@ -223,13 +223,13 @@
 .esheets-worksheet .esheets-confirm-ui p {
   margin: 0 0 1.5rem 0;
   font-weight: 500;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
 }
 
 /* --- Submission Summary --- */
 .esheets-worksheet .esheets-summary {
   margin-top: 1.5rem;
-  font-size: 1rem;
+  font-size: 1.2rem;
   color: #495057;
   border-top: 1px solid #dee2e6;
   padding-top: 1rem;
@@ -305,7 +305,7 @@
   /* Standard gap */
   margin-bottom: 2rem;
   margin-top: 10px;
-  font-size: 1.2rem;
+  font-size: 1.45rem;
   /* Larger row text */
 }
 
@@ -318,8 +318,8 @@
 .esheets-worksheet input[type="text"],
 .esheets-worksheet input[type="number"] {
   display: inline-block;
-  padding: 10px 12px !important;
-  font-size: 1.1rem !important;
+  padding: 12px 14px !important;
+  font-size: 1.3rem !important;
   font-family: inherit;
   line-height: 1.5;
   color: #495057;
@@ -329,7 +329,7 @@
   border-radius: 4px;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   min-width: 5em;
-  min-height: 46px !important;
+  min-height: 55px !important;
   /* iPad friendly touch target */
 }
 
@@ -389,7 +389,7 @@
 .esheets-worksheet .es-feedback {
   margin-left: 0.75rem;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 .esheets-worksheet .es-muted {
