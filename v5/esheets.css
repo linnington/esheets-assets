@@ -1,4 +1,4 @@
-/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 00:40 */
+/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 00:50 */
 
 /**
  * ESHEETS v5 Core Styles (Generic)
@@ -12,8 +12,8 @@
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   color: #212529;
-  font-size: 1.1rem;
-  /* Improved readability base */
+  font-size: 1.2rem;
+  /* Increased base size for App-like feel */
   width: 100%;
   max-width: 1000px;
   /* Wider layout */
@@ -28,7 +28,8 @@
 .esheets-worksheet [data-esheets-score] {
   font-weight: 600;
   color: #495057;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  /* Larger score text */
 }
 
 .esheets-worksheet .esheets-scorebar {
@@ -136,6 +137,16 @@
   font-size: 0.95rem !important;
   min-height: 36px !important;
 }
+
+/* 4. QUESTION ROW CHECK BUTTONS (Prevent Tiny Buttons) */
+/* Ensure check buttons inside rows specifically are comfortable */
+.esheets-worksheet .es-q-row .es-btn-small,
+.esheets-worksheet .es-q-row button.es-btn-small {
+  font-size: 1.0rem !important;
+  padding: 10px 14px !important;
+  min-height: 42px !important;
+}
+
 
 /* Base Hover */
 .esheets-worksheet button:hover:not(:disabled),
@@ -289,14 +300,16 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  /* Larger row text */
 }
 
 /* Styled Input - Increased Sizing */
 .esheets-worksheet .es-input {
   display: inline-block;
-  padding: 0.5rem 0.75rem;
-  font-size: 1.1rem;
+  padding: 0.6rem 0.8rem;
+  /* More breathing room */
+  font-size: 1.15rem;
   font-family: inherit;
   line-height: 1.5;
   color: #495057;
@@ -306,6 +319,8 @@
   border-radius: 4px;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   min-width: 5em;
+  min-height: 44px;
+  /* iPad friendly touch target */
 }
 
 .esheets-worksheet .es-input:focus {
