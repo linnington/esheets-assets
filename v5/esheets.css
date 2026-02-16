@@ -1,4 +1,4 @@
-/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 00:50 */
+/* CANONICAL v5 — Full Framework (Scoped: .esheets-worksheet) — 2026-02-16 00:58 */
 
 /**
  * ESHEETS v5 Core Styles (Generic)
@@ -12,8 +12,8 @@
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   color: #212529;
-  font-size: 1.2rem;
-  /* Increased base size for App-like feel */
+  font-size: 1.25rem;
+  /* Increased base size for readability */
   width: 100%;
   max-width: 1000px;
   /* Wider layout */
@@ -28,8 +28,8 @@
 .esheets-worksheet [data-esheets-score] {
   font-weight: 600;
   color: #495057;
-  font-size: 1.25rem;
-  /* Larger score text */
+  font-size: 1.3rem;
+  /* Even larger score text */
 }
 
 .esheets-worksheet .esheets-scorebar {
@@ -80,12 +80,6 @@
 
 /* --- Buttons (Scoped System) --- */
 
-/* 
-   Button Strategy: 
-   Use !important on critical metrics (size, padding) to ensure Ghost themes 
-   do not override them with tiny blog-style button defaults.
-*/
-
 /* 1. Base Reset & Shared Styles */
 .esheets-worksheet button,
 .esheets-worksheet .es-btn,
@@ -119,34 +113,37 @@
   line-height: 1.1 !important;
 }
 
-/* 3. STANDARD BUTTONS (Check buttons, etc) */
+/* 3. STANDARD BUTTONS (Check buttons - no longer specifically .es-btn-small) */
 /* Base button style for everything else */
 .esheets-worksheet button,
 .esheets-worksheet .es-btn,
 .esheets-worksheet .esheets-btn {
-  font-size: 1.0rem !important;
-  padding: 10px 14px !important;
-  min-height: 42px !important;
+  font-size: 1.05rem !important;
+  padding: 12px 16px !important;
+  min-height: 46px !important;
   border-radius: 6px;
   line-height: 1.5;
 }
 
-/* Small Variant - Explicit Override if needed */
+/* 4. PER-QUESTION OVERRIDES matching Inputs */
+/* Ensures check buttons align perfectly with inputs */
+.esheets-worksheet .es-q-row button,
+.esheets-worksheet .es-q-row .es-btn,
+.esheets-worksheet .es-question-actions button,
+.esheets-worksheet .answer-row button.es-btn {
+  font-size: 1.05rem !important;
+  padding: 12px 16px !important;
+  min-height: 46px !important;
+  /* Match Input Height */
+  border-radius: 6px;
+}
+
+/* Small Variant - Explicit Override if needed for truly tiny buttons elsewhere */
 .esheets-worksheet .es-btn-small {
   padding: 8px 12px !important;
-  font-size: 0.95rem !important;
-  min-height: 36px !important;
+  font-size: 1rem !important;
+  min-height: 38px !important;
 }
-
-/* 4. QUESTION ROW CHECK BUTTONS (Prevent Tiny Buttons) */
-/* Ensure check buttons inside rows specifically are comfortable */
-.esheets-worksheet .es-q-row .es-btn-small,
-.esheets-worksheet .es-q-row button.es-btn-small {
-  font-size: 1.0rem !important;
-  padding: 10px 14px !important;
-  min-height: 42px !important;
-}
-
 
 /* Base Hover */
 .esheets-worksheet button:hover:not(:disabled),
@@ -293,23 +290,35 @@
 
 /* --- Per-Question UI (Subtle/Teacher-friendly) --- */
 
-/* Question Row Layout */
-.esheets-worksheet .es-q-row {
+/* Question Text Overlay - Larger & Spaced */
+.esheets-worksheet .question-text {
+  font-size: 1.25em;
+  line-height: 1.35;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+/* Question Row Layout (Answer Row) */
+.esheets-worksheet .es-q-row,
+.esheets-worksheet .answer-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 12px;
+  /* Standard gap */
+  margin-bottom: 2rem;
+  margin-top: 10px;
   font-size: 1.2rem;
   /* Larger row text */
 }
 
-/* Styled Input - Increased Sizing */
-.esheets-worksheet .es-input {
+/* Styled Input - Increased Sizing (46px height) */
+.esheets-worksheet .es-input,
+.esheets-worksheet input[type="text"],
+.esheets-worksheet input[type="number"] {
   display: inline-block;
-  padding: 0.6rem 0.8rem;
-  /* More breathing room */
-  font-size: 1.15rem;
+  padding: 10px 12px !important;
+  font-size: 1.1rem !important;
   font-family: inherit;
   line-height: 1.5;
   color: #495057;
@@ -319,7 +328,7 @@
   border-radius: 4px;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   min-width: 5em;
-  min-height: 44px;
+  min-height: 46px !important;
   /* iPad friendly touch target */
 }
 
@@ -343,23 +352,12 @@
   background-image: none;
   border-color: #6c757d;
   padding: 0.4rem 0.8rem;
-  /* Slightly larger click target */
 }
 
 .esheets-worksheet .es-btn-outline:hover:not(:disabled) {
   color: #fff;
   background-color: #6c757d;
   border-color: #6c757d;
-}
-
-.esheets-worksheet .es-btn-outline:focus,
-.esheets-worksheet .es-btn-outline:active {
-  box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.5);
-}
-
-.esheets-worksheet .es-btn-outline:disabled {
-  color: #6c757d;
-  background-color: transparent;
 }
 
 /* Status Pill */
@@ -402,22 +400,6 @@
 
 .esheets-worksheet .es-input.es-invalid {
   border-color: #dc3545;
-}
-
-.esheets-worksheet .es-input.es-invalid:focus {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
-}
-
-.esheets-worksheet .es-input.es-readonly {
-  background-color: #f3f0fa;
-  /* Light purple tint */
-  cursor: text;
-}
-
-.esheets-worksheet .es-input.es-readonly:focus {
-  box-shadow: none;
-  border-color: #ced4da;
 }
 
 /* --- Print Styles --- */
@@ -507,13 +489,6 @@
     max-width: none !important;
     font-size: 12pt;
   }
-
-  /* Remove Identity Bar inputs for print cleanliness, or keep them? 
-     Usually teachers want students to write name. 
-     We can keep the structure but simplify borders if needed. 
-     For now, let them print as is, but maybe hide if empty? 
-     Let's leave them visible so students can verify identity.
-  */
 }
 
 /* Screen styles for name line (Hidden) */

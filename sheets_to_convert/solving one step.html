@@ -109,9 +109,9 @@
         // Store answer for Teacher Panel
         input.dataset.answer = correctAnswer;
 
-        // Button (.es-btn .es-btn-small .es-btn-outline)
+        // Button (.es-btn .es-btn-outline) - Removed es-btn-small
         const button = document.createElement('button');
-        button.className = 'es-btn es-btn-small es-btn-outline check-button';
+        button.className = 'es-btn es-btn-outline check-button';
         button.textContent = 'Check';
 
         // Feedback (.es-feedback)
@@ -270,7 +270,6 @@
 
     })();
   </script>
-
 </body>
 
 </html>
