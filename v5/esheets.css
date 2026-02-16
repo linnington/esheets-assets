@@ -12,7 +12,7 @@
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   color: #212529;
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   /* Increased base size for readability */
   width: 100%;
   max-width: 1000px;
@@ -229,7 +229,7 @@
 /* --- Submission Summary --- */
 .esheets-worksheet .esheets-summary {
   margin-top: 1.5rem;
-  font-size: 1.1em;
+  font-size: 1.25em;
   line-height: 1.4;
   color: #495057;
   border-top: 1px solid #dee2e6;
@@ -290,7 +290,7 @@
 
 /* Question Text Overlay - Larger & Spaced */
 .esheets-worksheet .question-text {
-  font-size: 1.25em;
+  font-size: 1.35em;
   line-height: 1.35;
   margin-bottom: 0.75rem;
   display: block;
@@ -306,12 +306,12 @@
   /* Standard gap */
   margin-bottom: 2rem;
   margin-top: 10px;
-  font-size: 1.45rem;
+  font-size: 1.6rem;
   /* Larger row text */
 }
 
 .esheets-worksheet .es-q-row label {
-  font-size: 1.15em !important;
+  font-size: 1.2em !important;
   font-weight: 700;
 }
 
