@@ -372,7 +372,7 @@
 }
 
 /* --- Per-Question UI (Subtle/Teacher-friendly) --- */
-.esheets-worksheet {font-size:150%;}
+.esheets-worksheet {font-size:150%;color:blue;}
 
 .esheets-worksheet .question-text {
   font-size: 1.35em;
