@@ -12,7 +12,7 @@
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   color: #212529;
-  font-size: 125%;
+  font-size: 1.4rem;
   width: 100%;
   max-width: 900px;
   /* Updated max-width */
@@ -372,6 +372,8 @@
 }
 
 /* --- Per-Question UI (Subtle/Teacher-friendly) --- */
+.esheets-worksheet {font-size:150%;}
+
 .esheets-worksheet .question-text {
   font-size: 1.35em;
   line-height: 1.35;
