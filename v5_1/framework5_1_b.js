@@ -492,7 +492,7 @@
                             errDiv.style.borderRadius = '4px';
                             errDiv.style.marginTop = '0.5rem';
                             errDiv.style.fontSize = '0.9em';
-                            errDiv.textContent = "Your score was saved on this device, but could not be sent to the teacher portal. Please try again.";
+                            errDiv.textContent = "Your score was saved on this device, but could not be sent to your teacher. Please check that you entered both your first name and last name, then try again.";
                             if (summaryDiv.parentNode) {
                                 summaryDiv.parentNode.insertBefore(errDiv, summaryDiv);
                             }
