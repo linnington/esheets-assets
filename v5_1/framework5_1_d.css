@@ -1,0 +1,668 @@
+/* CANONICAL v5.1 — Full Framework (Scoped: .esheets-worksheet) */
+
+/**
+ * ESHEETS v5.1 Core Styles (Generic)
+ * 
+ * Must work site-wide without affecting other elements.
+ * All rules MUST be scoped under .esheets-worksheet
+ */
+
+/* --- Base Scoping --- */
+.esheets-worksheet {
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  color: #212529;
+  font-size: 1.4rem;
+  width: 100%;
+  max-width: 900px;
+  /* Updated max-width */
+  margin: 0 auto;
+}
+
+.esheets-worksheet * {
+  box-sizing: border-box;
+}
+
+/* --- Score Displays (Top/Bottom) --- */
+.esheets-worksheet [data-esheets-score] {
+  font-weight: 700;
+  color: #495057;
+  font-size: 1.5rem;
+}
+
+.esheets-worksheet .esheets-scorebar {
+  padding: 1.1rem 1.6rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* --- Submission Bar (Bottom Control Panel) --- */
+.esheets-worksheet .esheets-submission-bar {
+  margin-top: 3rem;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-top: 2px solid #e9ecef;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.esheets-worksheet .esheets-submission-bar .esheets-btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+/* --- Tracking Panel --- */
+.esheets-worksheet .es-tracking-panel {
+  color: #6c757d;
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  align-self: flex-end;
+}
+
+.esheets-worksheet .es-track-label {
+  text-transform: uppercase;
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
+  color: #513094;
+  margin-right: 0.25rem;
+}
+
+.esheets-worksheet .es-track-val {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #212529;
+  font-weight: 600;
+}
+
+/* --- Identity Bar --- */
+.esheets-worksheet .esheets-identity-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.esheets-worksheet .esheets-identity-bar.es-tracking-inactive {
+  margin-bottom: 0;
+  gap: 0;
+}
+
+.esheets-worksheet .es-student-warning {
+  margin-top: 0.5rem;
+  font-size: 0.9em;
+  color: #6c757d;
+  font-style: italic;
+  width: 100%;
+}
+
+.esheets-worksheet .es-tp-tracking-info {
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #d5c8eb;
+  font-size: 0.95em;
+  color: #513094;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  width: 100%;
+}
+
+.esheets-worksheet .es-id-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.esheets-worksheet .es-id-row > div.es-id-field {
+  display: flex;
+  align-items: center;
+  flex: 1 1 300px;
+}
+
+.esheets-worksheet .es-id-row label {
+  font-weight: bold;
+  margin-right: 1rem;
+  white-space: nowrap;
+}
+
+/* Wider Identity Fields */
+.esheets-worksheet .es-id-row .es-input {
+  width: 100%;
+  flex-grow: 1;
+  min-width: 200px;
+}
+
+/* Print Identity Header - Controlled by JS now */
+.esheets-worksheet .es-print-header {
+  display: none;
+}
+
+/* --- Buttons (Scoped System) --- */
+
+/* 1. Base Reset & Shared Styles */
+.esheets-worksheet button,
+.esheets-worksheet .es-btn,
+.esheets-worksheet .esheets-btn {
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background-color: #e9ecef;
+  color: #212529;
+  transition: all 0.2s ease-in-out;
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  user-select: none;
+}
+
+/* 2. PRIMARY ACTION BUTTONS (Submission Bar) */
+.esheets-worksheet #submissionBar button,
+.esheets-worksheet #submissionBar a,
+.esheets-worksheet #submissionBar .es-btn,
+.esheets-worksheet #submissionBar .esheets-btn,
+.esheets-worksheet #submissionBar [role="button"],
+.esheets-worksheet #submissionBar input[type="button"],
+.esheets-worksheet #submissionBar input[type="submit"] {
+  font-size: 1.5rem !important;
+  padding: 19px 31px !important;
+  min-height: 62px !important;
+  border-radius: 10px !important;
+  line-height: 1.1 !important;
+}
+
+/* 3. STANDARD BUTTONS */
+.esheets-worksheet button,
+.esheets-worksheet .es-btn,
+.esheets-worksheet .esheets-btn {
+  font-size: 1.25rem !important;
+  padding: 14px 20px !important;
+  min-height: 55px !important;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
+/* 4. PER-QUESTION OVERRIDES */
+.esheets-worksheet .es-q-row button,
+.esheets-worksheet .es-q-row .es-btn,
+.esheets-worksheet .es-question-actions button,
+.esheets-worksheet .answer-row button.es-btn {
+  font-size: 1.1em !important;
+  padding: 12px 18px !important;
+  min-height: 52px !important;
+  border-radius: 6px;
+}
+
+/* Small Variant */
+.esheets-worksheet .es-btn-small {
+  padding: 10px 14px !important;
+  font-size: 1.2rem !important;
+  min-height: 46px !important;
+}
+
+/* Base Hover */
+.esheets-worksheet button:hover:not(:disabled),
+.esheets-worksheet .es-btn:hover:not(:disabled),
+.esheets-worksheet .esheets-btn:hover:not(:disabled) {
+  background-color: #dde2e6;
+  text-decoration: none;
+}
+
+/* Base Focus */
+.esheets-worksheet button:focus,
+.esheets-worksheet .es-btn:focus,
+.esheets-worksheet .esheets-btn:focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+}
+
+/* Primary Variant (Brand Purple #513094) */
+.esheets-worksheet .es-btn-primary,
+.esheets-worksheet .esheets-btn-primary {
+  background-color: #513094;
+  color: white;
+  border-color: #513094;
+}
+
+.esheets-worksheet .es-btn-primary:hover:not(:disabled),
+.esheets-worksheet .esheets-btn-primary:hover:not(:disabled) {
+  background-color: #3b226e;
+  border-color: #3b226e;
+}
+
+.esheets-worksheet .es-btn-primary:focus,
+.esheets-worksheet .esheets-btn-primary:focus {
+  box-shadow: 0 0 0 0.25rem rgba(81, 48, 148, 0.5);
+}
+
+/* Secondary Variant */
+.esheets-worksheet .es-btn-secondary,
+.esheets-worksheet .esheets-btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.esheets-worksheet .es-btn-secondary:hover:not(:disabled),
+.esheets-worksheet .esheets-btn-secondary:hover:not(:disabled) {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+.esheets-worksheet .es-btn-secondary:focus,
+.esheets-worksheet .esheets-btn-secondary:focus {
+  box-shadow: 0 0 0 0.25rem rgba(130, 138, 145, 0.5);
+}
+
+/* Disabled State */
+.esheets-worksheet .es-btn:disabled,
+.esheets-worksheet .es-btn.disabled,
+.esheets-worksheet .esheets-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* --- Confirmation UI (In-page) --- */
+.esheets-worksheet .esheets-confirm-ui {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 6px;
+  color: #856404;
+  animation: esheets-fade-in 0.3s ease-out;
+}
+
+.esheets-worksheet .esheets-confirm-ui p {
+  margin: 0 0 1.5rem 0;
+  font-weight: 500;
+  font-size: 1.3rem;
+}
+
+.esheets-worksheet .esheets-summary {
+  margin-top: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #495057;
+  border-top: 1px solid #dee2e6;
+  padding-top: 1.5rem;
+}
+
+.esheets-worksheet .es-lockout-message {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.esheets-worksheet .esheets-summary div {
+  margin: 0.5rem 0;
+}
+
+/* --- Locked / Correct Inputs --- */
+.esheets-worksheet input.es-correct-locked,
+.esheets-worksheet input.es-correct-locked:disabled {
+  background-color: #ebfaeb !important;
+  border-color: #2e8b57 !important;
+  color: #006400 !important;
+  opacity: 1 !important;
+  cursor: default;
+  font-weight: bold;
+}
+
+.esheets-worksheet input:disabled:not(.es-correct-locked) {
+  background-color: #e9ecef;
+  color: #495057;
+  cursor: not-allowed;
+  border-color: #ced4da;
+}
+
+/* --- Teacher Panel -- */
+.esheets-worksheet .esheets-teacher-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 1.2rem;
+  margin-top: 2rem;
+  background-color: #f6f4fa;
+  /* Soft purple */
+  border: 1px solid #d5c8eb;
+  border-left: 4px solid #513094;
+  border-radius: 6px;
+}
+
+.esheets-worksheet .esheets-teacher-panel .es-tp-header {
+  font-weight: bold;
+  color: #513094;
+}
+
+.esheets-worksheet .esheets-teacher-panel .es-tp-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.esheets-worksheet .esheets-teacher-panel button.es-btn-secondary {
+  background-color: #513094 !important;
+  color: #ffffff !important;
+  border-color: #513094 !important;
+}
+.esheets-worksheet .esheets-teacher-panel button.es-btn-secondary:hover {
+  background-color: #3b226e !important;
+  border-color: #3b226e !important;
+}
+
+/* Teacher Panel Close Button */
+.esheets-worksheet .esheets-teacher-panel .es-btn-outline {
+  background: transparent !important;
+  border: 2px solid #513094 !important;
+  color: #513094 !important;
+  padding: 2px 12px !important;
+  font-size: 1.2em;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.esheets-worksheet .esheets-teacher-panel .es-btn-outline:hover {
+  background: #513094 !important;
+  color: #ffffff !important;
+}
+
+/* --- Utility Animations --- */
+@keyframes esheets-fade-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Per-Question UI (Subtle/Teacher-friendly) --- */
+.esheets-worksheet .question-text {
+  font-size: 1.35em;
+  line-height: 1.35;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+/* Framework-first size boost for explicit equations/prompts inside migrated worksheets */
+.esheets-worksheet .question .es-equation,
+.esheets-worksheet .question-text .es-equation,
+.esheets-worksheet .es-q-row .es-equation {
+  font-size: 1.65rem;
+}
+
+/* Framework-first size boost for ordinary prompt paragraphs */
+.esheets-worksheet .question p,
+.esheets-worksheet .question-block p {
+  font-size: 1.6rem;
+}
+
+.esheets-worksheet .es-q-row,
+.esheets-worksheet .answer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2rem;
+  margin-top: 10px;
+  font-size: 1.6rem;
+}
+
+.esheets-worksheet .es-q-row label {
+  font-size: 1.2em !important;
+  font-weight: 700;
+}
+
+.esheets-worksheet .es-input,
+.esheets-worksheet input[type="text"],
+.esheets-worksheet input[type="number"] {
+  display: inline-block;
+  padding: 12px 14px !important;
+  font-size: 1.1em !important;
+  font-family: inherit;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  min-width: 5em;
+  min-height: 52px !important;
+  width: 120px;
+  max-width: 100%;
+}
+
+.esheets-worksheet .es-input-wide {
+  width: 100% !important;
+}
+
+.esheets-worksheet .es-input:focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: #bfaee3;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(81, 48, 148, 0.25);
+}
+
+.esheets-worksheet .es-btn-outline:not(.es-tp-close) {
+  color: #6c757d;
+  background-color: transparent;
+  background-image: none;
+  border-color: #6c757d;
+}
+
+.esheets-worksheet .es-pill {
+  display: inline-block;
+  padding: 0.35em 0.75em;
+  font-size: 85%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 10rem;
+}
+
+.esheets-worksheet .es-pill-correct {
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.esheets-worksheet .es-pill-wrong {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.esheets-worksheet .es-feedback {
+  display: inline-block;
+  margin-left: 12px;
+  font-weight: 600;
+}
+
+.esheets-worksheet .es-feedback--correct { color: #0a7a2f; }
+.esheets-worksheet .es-feedback--incorrect { color: #c81e1e; }
+.esheets-worksheet .es-feedback--neutral { color: inherit; }
+
+/* --- Identity Input States --- */
+.esheets-worksheet .es-input.es-invalid {
+  border-color: #dc3545;
+}
+
+/* --- Print Styles --- */
+@media print {
+  figure.gh-article-image,
+  figure.kg-embed-card,
+  figure.kg-card,
+  div.gh-comments,
+  footer.gh-foot,
+  .gh-canvas>figure,
+  .gh-canvas>header,
+  .gh-comments-box,
+  #ghost-comments-root {
+    display: none !important;
+  }
+
+  .esheets-worksheet .esheets-submission-bar,
+  .esheets-worksheet button,
+  .esheets-worksheet .es-btn,
+  .esheets-worksheet .check-button,
+  .esheets-worksheet .es-lockout-message,
+  .esheets-worksheet .es-student-warning {
+    display: none !important;
+  }
+
+  /* Identity print header replaces normal fields */
+  .esheets-worksheet .esheets-identity-bar .es-id-row,
+  .esheets-worksheet .esheets-identity-bar .es-id-field,
+  .esheets-worksheet .esheets-identity-bar label,
+  .esheets-worksheet .esheets-identity-bar input {
+    display: none !important;
+  }
+  
+  .esheets-worksheet .es-print-header {
+    display: flex !important;
+    gap: 2rem;
+    font-size: 12pt;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #000;
+  }
+
+  .esheets-worksheet .es-tracking-panel {
+    display: none !important;
+  }
+
+  /* Compact Print Tuning */
+  .esheets-worksheet .es-input {
+    font-size: 10pt !important;
+    padding: 0 !important;
+    max-width: 32px !important;
+    height: 16px !important;
+    min-height: auto !important;
+    line-height: 1 !important;
+    border-width: 1px !important;
+  }
+
+  .esheets-worksheet .question,
+  .esheets-worksheet .es-q-row,
+  .esheets-worksheet .answer-row {
+    margin-bottom: 0 !important;
+    padding: 0 0 0.15rem 0 !important;
+    border-bottom: none !important;
+  }
+
+  html.es-score-zero .esheets-worksheet [data-esheets-score] {
+    display: none !important;
+  }
+
+  .esheets-worksheet .esheets-teacher-panel {
+    display: none !important;
+  }
+
+  :root.esheets-teacher .esheets-worksheet .esheets-teacher-panel {
+    display: flex !important;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+  }
+
+  :root.esheets-teacher .esheets-worksheet .esheets-teacher-panel .es-tp-actions {
+    display: none !important;
+  }
+
+  :root.esheets-teacher .esheets-worksheet .esheets-teacher-panel .es-tp-header {
+    display: block !important;
+    font-size: 1.25em;
+    text-align: center;
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #000;
+  }
+
+  .esheets-worksheet .es-input.es-revealed {
+    border-color: #000 !important;
+    background-color: #fff !important;
+    color: #000 !important;
+    font-weight: bold;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .esheets-worksheet .es-q-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .es-print-name-line {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.2rem;
+    font-family: sans-serif;
+  }
+
+  .esheets-worksheet {
+    border: none !important;
+    background: white !important;
+    width: 100% !important;
+    max-width: none !important;
+    font-size: 12pt;
+    padding: 0 !important;
+  }
+}
+
+.es-print-name-line {
+  display: none;
+}
+
+/* --- Static Fraction Formatting (In-Text / Questions) --- */
+.esheets-worksheet .es-visual-mixed-fraction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  vertical-align: middle;
+}
+.esheets-worksheet .es-whole-number {
+  font-size: 1.4em;
+  line-height: 1;
+}
+.esheets-worksheet .es-fraction-column {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin: 0 0.2rem;
+}
+.esheets-worksheet .es-fraction-label-static {
+  font-size: 1.1em;
+  margin: 0.1rem 0;
+  text-align: center;
+  line-height: 1;
+}
+.esheets-worksheet .es-fraction-line-static {
+  width: 100%;
+  min-width: 1.5em;
+  height: 0;
+  border-bottom: 2px solid currentColor;
+  margin: 2px 0;
+}
