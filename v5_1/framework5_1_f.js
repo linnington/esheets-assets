@@ -475,7 +475,7 @@
                 shareBtn.className = 'es-btn es-btn-secondary es-btn-small';
                 shareBtn.textContent = 'Share achievement';
                 
-                var shareText = 'I completed a maths worksheet on esheets.io and earned a ' + badgeData.name + ' badge! ' + badgeData.emoji + '\nhttps://www.esheets.io/maths/';
+                var shareText = 'I completed a maths worksheet on esheets.io and earned the ' + badgeData.name + ' badge! ' + badgeData.emoji + '\nhttps://www.esheets.io/maths/';
                 
                 var handleCopy = function(btn) {
                     var originalText = btn.textContent;
