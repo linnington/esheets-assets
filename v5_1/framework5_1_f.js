@@ -189,7 +189,7 @@
             { min: 80, msg: "Excellent work — that’s a score worth celebrating.", badges: [{n:'Brilliant Bear', e:'🐻'}, {n:'Powerful Panther', e:'🐆'}, {n:'Excellent Elephant', e:'🐘'}] },
             { min: 70, msg: "Great effort — keep building your confidence.", badges: [{n:'Clever Crocodile', e:'🐊'}, {n:'Dazzling Dolphin', e:'🐬'}, {n:'Great Gorilla', e:'🦍'}] },
             { min: 60, msg: "Great effort — keep building your confidence.", badges: [{n:'Practising Parrot', e:'🦜'}, {n:'Steady Squirrel', e:'🐿️'}, {n:'Curious Crab', e:'🦀'}] },
-            { min: 50, msg: "Good practice — correct a few more answers and record again to upgrade your badge.", badges: [{n:'Growing Gecko', e:'🦎'}, {n:'Busy Beaver', e:'🦫'}, {n:'Climbing Koala', e:'🐨'}] },
+            { min: 50, msg: "Good practice — correct a few more answers and record again to upgrade your badge.", badges: [{n:'Growing Gecko', e:'🦎'}, {n:'Helpful Hedgehog', e:'🦔'}, {n:'Climbing Koala', e:'🐨'}] },
             { min: 40, msg: "Good practice — correct a few more answers and record again to upgrade your badge.", badges: [{n:'Busy Beetle', e:'🪲'}, {n:'Determined Duck', e:'🦆'}, {n:'Resilient Rabbit', e:'🐇'}] },
             { min: 30, msg: "Keep going — every correction helps you improve.", badges: [{n:'Determined Ant', e:'🐜'}, {n:'Tenacious Turtle', e:'🐢'}, {n:'Patient Penguin', e:'🐧'}] },
             { min: 20, msg: "Keep going — every correction helps you improve.", badges: [{n:'Steady Snail', e:'🐌'}, {n:'Brave Beginner', e:'🐣'}, {n:'Curious Caterpillar', e:'🐛'}] },
