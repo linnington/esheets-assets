@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "esheets-assets",
+  "compatibility_date": "2026-05-12",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "furball_v2"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
