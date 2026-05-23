@@ -1,1 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoo Mogul</title>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LM261TLP6C"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-LM261TLP6C');
+</script>
+<!--add within head of page-->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="pz-game">
+        <header class="pz-header">
+            <h1>Zoo Mogul</h1>
+            <div class="pz-stats-bar">
+                <div class="pz-stat" id="pz-stat-day">Day: 1</div>
+                <div class="pz-stat" id="pz-stat-cash">Cash: £1400</div>
+                <div class="pz-stat" id="pz-stat-ticket">Ticket: £5</div>
+                <div class="pz-stat" id="pz-stat-reputation">Reputation: 50</div>
+                <div class="pz-stat" id="pz-stat-v-happy">Visitor Happiness: 60</div>
+                <div class="pz-stat" id="pz-stat-a-happy">Animal Happiness: 70</div>
+                <div class="pz-stat" id="pz-stat-clean">Cleanliness: 70</div>
+                <div class="pz-stat" id="pz-stat-profit">Profit/Loss: -</div>
+            </div>
+        </header>
+
+        <div class="pz-main-layout">
+            <div class="pz-grid-area">
+                <div id="pz-grid" class="pz-grid"></div>
+                <div class="pz-grid-controls-card">
+                    <div class="pz-ticket-controls">
+                        <button class="pz-btn-ticket" data-price="3">£3 Budget</button>
+                        <button class="pz-btn-ticket active" data-price="5">£5 Standard</button>
+                        <button class="pz-btn-ticket" data-price="7">£7 Premium</button>
+                        <button class="pz-btn-ticket" data-price="10">£10 Ambitious</button>
+                    </div>
+                    <button id="pz-btn-run" class="pz-btn-primary">Open zoo for the day</button>
+                </div>
+            </div>
+
+            <div class="pz-side-panel">
+                <div class="pz-panel-card pz-zoo-name-card">
+                    <div class="pz-zoo-name-header">
+                        <label for="pz-zoo-name-input">Zoo name</label>
+                        <button id="pz-btn-sound-toggle" class="pz-btn-sound-toggle">Sound: Off</button>
+                    </div>
+                    <input type="text" id="pz-zoo-name-input" class="pz-zoo-name-input" placeholder="Name your zoo" maxlength="30">
+                    <div class="pz-zoo-name-helper">Choose a name before opening day.</div>
+                </div>
+                <div class="pz-panel-card pz-event-card">
+                    <h3 id="pz-next-event-title">Tomorrow's Event</h3>
+                    <div id="pz-next-event-details" class="pz-event-details">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="pz-panel-card pz-sponsor-card">
+                    <h3>Sponsor Goal</h3>
+                    <div id="pz-sponsor-details" class="pz-sponsor-details">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="pz-panel-card pz-manager-card">
+                    <h3>Manager Notes</h3>
+                    <div id="pz-manager-notes" class="pz-manager-notes">
+                        <!-- Live summary dynamically injected here -->
+                    </div>
+                </div>
+
+                <div class="pz-panel-card pz-controls-card">
+                    <div class="pz-controls-scroll">
+                        <h3>Build Menu</h3>
+                        <div class="pz-build-sections">
+                            <div class="pz-build-section">
+                                <h4>Paths & Facilities</h4>
+                                <div id="pz-build-facilities" class="pz-build-list"></div>
+                            </div>
+                            <div class="pz-build-section">
+                                <h4>Scenery</h4>
+                                <div id="pz-build-scenery" class="pz-build-list"></div>
+                            </div>
+                            <div class="pz-build-section">
+                                <h4>Animals</h4>
+                                <div id="pz-build-animals" class="pz-build-list"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="pz-panel-card pz-challenges-card">
+                    <h3>Challenges</h3>
+                    <div id="pz-challenges-list" class="pz-challenges-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="pz-panel-card pz-records-card">
+                    <h3>Best Records</h3>
+                    <div id="pz-best-records-list" class="pz-records-list">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div id="pz-side-endings-progress" class="pz-side-endings-progress"></div>
+                    <div class="pz-reset-records-wrapper">
+                        <button id="pz-btn-reset-records" class="pz-btn-reset-records">Reset Records</button>
+                        <div id="pz-reset-records-confirm" class="pz-reset-confirm hidden">
+                            <span>Are you sure?</span>
+                            <button id="pz-btn-confirm-yes" class="pz-btn-confirm-yes">Yes</button>
+                            <button id="pz-btn-confirm-no" class="pz-btn-confirm-no">No</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals and Overlays -->
+        <div id="pz-modal-overlay" class="pz-modal-overlay hidden">
+            <div id="pz-daily-report" class="pz-modal-content hidden">
+                <h2>End of Day Report</h2>
+                <div class="pz-modal-body">
+                    <div id="pz-report-headline" class="pz-report-headline"></div>
+                    <div id="pz-report-narrative" class="pz-report-narrative"></div>
+                    <div id="pz-report-stats" class="pz-report-grid"></div>
+                    <div id="pz-report-event" class="pz-report-event"></div>
+                    <div id="pz-report-advice" class="pz-report-advice"></div>
+                </div>
+                <div class="pz-modal-footer">
+                    <button id="pz-btn-next-day" class="pz-btn-primary">Start Next Day</button>
+                </div>
+            </div>
+            
+            <div id="pz-final-report" class="pz-modal-content hidden">
+                <div class="pz-final-header">
+                    <h2 id="pz-final-zoo-name">Zoo Mogul</h2>
+                    <h3 id="pz-final-report-title">Challenge Complete!</h3>
+                    <div id="pz-final-rating" class="pz-final-rating"></div>
+                </div>
+                <div class="pz-modal-body pz-result-card">
+                    <div id="pz-final-stats" class="pz-report-grid"></div>
+                    <div id="pz-final-sponsor" class="pz-final-sponsor hidden"></div>
+                    <div id="pz-final-diagnostics" class="pz-final-diagnostics"></div>
+                    <div id="pz-final-records-msg" class="pz-final-records-msg hidden"></div>
+                    <div id="pz-final-endings" class="pz-final-endings"></div>
+                </div>
+                <div class="pz-modal-footer pz-final-footer">
+                    <button id="pz-btn-copy-summary" class="pz-btn-share">Brag about my zoo</button>
+                    <button id="pz-btn-restart" class="pz-btn-primary">Play Again</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Messages -->
+        <div id="pz-toast-container" class="pz-toast-container"></div>
+        
+        <div class="pz-copyright">&copy; 2026 esheets.io</div>
+    </div>
+    
+    <script src="game.js?v=2"></script>
+</body>
+</html>
 
