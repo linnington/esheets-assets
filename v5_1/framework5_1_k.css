@@ -762,6 +762,7 @@
   font-weight: 500;
   text-decoration: underline;
   transition: color 0.2s ease-in-out;
+  margin-bottom:2em;
 }
 .esheets-worksheet .es-topic-guide-jump a:hover {
   color: #3b2270;
