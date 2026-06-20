@@ -1,5 +1,5 @@
 /* CANONICAL v5.1 — Full Framework (Scoped: .esheets-worksheet) */
-
+/*2026-06-12 11:37*/
 /**
  * ESHEETS v5.1 Core Styles (Generic)
  * 
@@ -446,28 +446,32 @@
 
 /* --- Teacher Signup CTA --- */
 .esheets-worksheet .es-teacher-signup-cta {
-  font-size: 0.95em;
-  text-align: center;
+  font-size: 1.15rem;
   margin: 0 auto 1.5rem auto;
-  color: #495057;
-  font-weight: 500;
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
+  color: #513094;
+  font-weight: 600;
+  background-color: #fcfbfe;
+  border: 1px solid #d5c8eb;
   border-radius: 6px;
-  padding: 0.75rem 1.5rem;
+  padding: 1rem 1.5rem;
   max-width: 900px;
   width: 100%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.esheets-worksheet .es-teacher-signup-cta:hover {
+  background-color: #f6f4fa;
+  color: #3b226e;
 }
 
 .esheets-worksheet .es-teacher-signup-cta a {
-  color: #513094;
+  color: inherit;
   text-decoration: none;
   font-weight: 600;
   transition: color 0.2s ease-in-out;
 }
 
 .esheets-worksheet .es-teacher-signup-cta a:hover {
-  color: #3b226e;
   text-decoration: underline;
 }
 
@@ -729,6 +733,7 @@
   .esheets-worksheet .es-lockout-message,
   .esheets-worksheet .es-student-warning,
   .esheets-worksheet .es-teacher-signup-cta,
+  .esheets-worksheet .es-topic-guide-jump,
   .esheets-worksheet .es-badge-card,
   .esheets-worksheet .es-loading-state {
     display: none !important;
@@ -870,26 +875,4 @@
   height: 0;
   border-bottom: 2px solid currentColor;
   margin: 2px 0;
-}
-
-/* --- Topic Guide Jump Link --- */
-.esheets-worksheet .es-topic-guide-jump {
-  text-align: left;
-  margin: 1.1rem 0 2.5rem;
-}
-.esheets-worksheet .es-topic-guide-jump a {
-  display: inline-block;
-  color: #6040a0;
-  font-size: 18px;
-  font-weight: 500;
-  text-decoration: underline;
-  transition: color 0.2s ease-in-out;
-}
-.esheets-worksheet .es-topic-guide-jump a:hover {
-  color: #3b2270;
-}
-@media print {
-  .esheets-worksheet .es-topic-guide-jump {
-    display: none !important;
-  }
 }
