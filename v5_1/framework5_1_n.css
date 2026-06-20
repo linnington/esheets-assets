@@ -446,24 +446,29 @@
 
 /* --- Teacher Signup CTA --- */
 .esheets-worksheet .es-teacher-signup-cta {
-  font-size: 0.9em;
+  font-size: 0.95em;
   text-align: center;
-  margin: 0.5rem 0 1.5rem 0;
-  color: #6c757d;
+  margin: 0 auto 1.5rem auto;
+  color: #495057;
   font-weight: 500;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  max-width: 900px;
+  width: 100%;
 }
 
 .esheets-worksheet .es-teacher-signup-cta a {
   color: #513094;
-  text-decoration: underline;
-  text-decoration-color: rgba(81, 48, 148, 0.4);
-  text-underline-offset: 3px;
-  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease-in-out;
 }
 
 .esheets-worksheet .es-teacher-signup-cta a:hover {
   color: #3b226e;
-  text-decoration-color: #3b226e;
+  text-decoration: underline;
 }
 
 /* --- Utility Animations --- */
@@ -618,18 +623,20 @@
 
 /* --- Static Previews --- */
 .es-static-preview {
-  margin: 1.5rem auto;
+  margin: 0 auto 1.5rem auto;
   font-family: system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   color: #212529;
   max-width: 900px;
+  width: 100%;
 }
 
 .es-static-preview__details {
   background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
+  border: 1px solid #d5c8eb;
   border-radius: 6px;
-  padding: 0.5rem 1.5rem;
+  padding: 0;
+  overflow: hidden;
 }
 
 .es-static-preview__details[open] {
@@ -641,19 +648,21 @@
   font-size: 1.15rem;
   color: #513094;
   cursor: pointer;
-  padding: 0.75rem 0;
+  padding: 1rem 1.5rem;
   user-select: none;
-  transition: color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
+  background-color: #fcfbfe;
 }
 
 .es-static-preview__summary:hover {
+  background-color: #f6f4fa;
   color: #3b226e;
 }
 
 .es-static-preview__body {
-  margin-top: 0.5rem;
-  border-top: 1px dashed #ced4da;
-  padding-top: 1.5rem;
+  margin-top: 0;
+  border-top: 1px dashed #d5c8eb;
+  padding: 1.5rem 1.5rem 0 1.5rem;
 }
 
 .es-static-preview__body h3 {
@@ -666,6 +675,36 @@
   font-size: 1.25rem;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
+}
+
+/* --- Topic Guide Jump Link --- */
+.esheets-worksheet .es-topic-guide-jump {
+  margin: 0 auto 1.5rem auto;
+  max-width: 900px;
+  width: 100%;
+}
+
+.esheets-worksheet .es-topic-guide-jump a {
+  display: block;
+  background-color: #fcfbfe;
+  border: 1px solid #d5c8eb;
+  border-radius: 6px;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: #513094;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.esheets-worksheet .es-topic-guide-jump a:hover {
+  background-color: #f6f4fa;
+  color: #3b226e;
+}
+
+.esheets-worksheet .es-topic-guide-jump a:focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(81, 48, 148, 0.25);
 }
 
 /* --- Print Styles --- */
