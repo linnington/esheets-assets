@@ -1014,7 +1014,17 @@ function checkAnswer(q,input){
   if(s==="")return false;
   switch(q.kind){
     case "num":{const v=parseNum(s);return Number.isFinite(v)&&Math.abs(v-q.answer)<1e-6;}
-    case "frac":{const v=parseNum(s);const t=q.answer[0]/q.answer[1];return Number.isFinite(v)&&Math.abs(v-t)<1e-6;}
+    case "frac":{
+      // Fractions are asked for in simplest form, so do NOT accept merely equivalent fractions.
+      // The old checker converted the input to a decimal value, so 2/4 was accepted for 1/2.
+      if(!/^-?\d+\/\d+$/.test(s))return false;
+      let [n,d]=s.split("/").map(Number);
+      if(!Number.isInteger(n)||!Number.isInteger(d)||d===0)return false;
+      if(d<0){n=-n;d=-d;}
+      const common=gcd(Math.abs(n),Math.abs(d));
+      if(common!==1)return false;
+      return n===q.answer[0]&&d===q.answer[1];
+    }
     case "exact":{const acc=Array.isArray(q.answer)?q.answer:[q.answer];return acc.some(a=>normIn(a)===s);}
     case "expr":{const p=parseExpr(s);return !!p&&Math.abs(p.x-q.answer.x)<1e-9&&Math.abs(p.c-q.answer.c)<1e-9;}
   }
