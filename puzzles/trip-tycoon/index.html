@@ -1,0 +1,2066 @@
+
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ERA Week: Trip Tycoon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#26214A; --canvas:#FDF4FF;
+  --sky:#4CC9F0; --sky-dark:#2A9BC4;
+  --grape:#9D4EDD; --grape-dark:#6F2DA8;
+  --bubble:#F72585; --bubble-dark:#C0186A;
+  --sun:#FFD166; --sun-dark:#D9A62E;
+  --lime:#06D6A0; --lime-dark:#049A73;
+  --coral:#EF476F;
+  --t-budget:#06D6A0; --t-standard:#4CC9F0; --t-premium:#9D4EDD; --t-ambitious:#F72585;
+  --radius:18px;
+  --shadow:0 5px 0 rgba(38,33,74,.18);
+  --disp:"Fredoka","Nunito",ui-rounded,system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:"Nunito",system-ui,sans-serif;font-size:17px;line-height:1.45;color:var(--ink);
+  background:var(--canvas);
+  background-image:
+    radial-gradient(circle, #FFD16633 0 6px, transparent 7px),
+    radial-gradient(circle, #4CC9F033 0 5px, transparent 6px),
+    radial-gradient(circle, #F7258522 0 7px, transparent 8px);
+  background-size:120px 120px,160px 160px,200px 200px;
+  background-position:0 0,60px 80px,30px 40px;
+  min-height:100vh;padding-bottom:30px;
+}
+h1,h2,h3,.disp{font-family:var(--disp);line-height:1.15;margin:0;}
+.hidden{display:none !important;}
+.muted{color:#6C6694;font-size:14px;}
+button{font-family:inherit;color:var(--ink);}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
+
+/* ---------- layout ---------- */
+#wrap{max-width:1100px;margin:0 auto;padding:12px;}
+
+/* ---------- HUD lanyard ---------- */
+#hud{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--ink);color:#fff;border-radius:18px;padding:10px 14px;
+  box-shadow:var(--shadow);position:relative;
+}
+#hud::before{ /* lanyard clip */
+  content:"";position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  width:46px;height:14px;background:var(--bubble);border-radius:8px;border:3px solid var(--ink);
+}
+#hud .logo{font-family:var(--disp);font-weight:700;font-size:21px;letter-spacing:.4px;}
+#hud .logo b{color:var(--sun);}
+#hud .spacer{flex:1;}
+.chip{
+  display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);
+  border-radius:999px;padding:5px 13px;font-weight:800;font-size:15px;
+}
+.chip .lab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;opacity:.7;font-weight:700;}
+.chip.flash{animation:chipflash .7s ease;}
+@keyframes chipflash{0%{background:var(--sun);color:var(--ink);}100%{background:rgba(255,255,255,.14);}}
+#chipStreak.hot{background:var(--sun);color:var(--ink);}
+
+/* ---------- day banner / stage tracker ---------- */
+#dayBanner{
+  margin:14px 0 10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:#fff;border:3px solid var(--ink);border-radius:var(--radius);
+  padding:10px 16px;box-shadow:var(--shadow);
+}
+#dayBanner .big{font-size:34px;}
+#dayBanner h2{font-size:21px;}
+#stageDots{display:flex;gap:7px;margin-left:auto;}
+#stageDots .sdot{
+  font-family:var(--disp);font-weight:600;font-size:13px;padding:5px 12px;border-radius:999px;
+  background:#EFEAF7;border:2px solid transparent;color:#8B85AE;
+}
+#stageDots .sdot.now{background:var(--sun);border-color:var(--ink);color:var(--ink);}
+#stageDots .sdot.done{background:var(--lime);color:#fff;}
+
+/* ---------- cards ---------- */
+.card{
+  background:#fff;border:3px solid var(--ink);border-radius:var(--radius);
+  padding:20px;box-shadow:var(--shadow);animation:pop .25s ease both;margin-bottom:14px;
+}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.99);}to{opacity:1;transform:none;}}
+.eyebrow{font-family:var(--disp);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--grape);margin-bottom:4px;}
+
+/* ---------- buttons ---------- */
+.btn{
+  font-family:var(--disp);font-weight:600;font-size:17px;
+  background:#fff;border:3px solid var(--ink);border-radius:14px;
+  padding:11px 20px;cursor:pointer;box-shadow:0 4px 0 var(--ink);
+  min-height:48px;touch-action:manipulation;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink);}
+.btn.sun{background:var(--sun);}
+.btn.lime{background:var(--lime);color:#fff;}
+.btn.bubble{background:var(--bubble);color:#fff;}
+.btn.sky{background:var(--sky);}
+.btn.big{font-size:20px;padding:14px 28px;}
+.btn:disabled{opacity:.4;pointer-events:none;}
+.btnRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;justify-content:center;}
+
+/* ---------- cash builder ticket board ---------- */
+#orderGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px;margin-top:12px;}
+.ticket{
+  position:relative;background:#fff;border:3px solid var(--ink);border-radius:14px;
+  padding:13px 13px 13px 22px;box-shadow:var(--shadow);
+}
+.ticket::before{content:"";position:absolute;left:0;top:0;bottom:0;width:11px;background:var(--tier,#999);border-radius:9px 0 0 9px;}
+.ticket .eyebrow{color:var(--tier,#999);margin-bottom:2px;}
+.ticket h3{font-size:17px;margin-bottom:2px;}
+.ticket .strand{font-size:13px;color:#6C6694;margin-bottom:8px;}
+.ticket .pay{font-family:var(--disp);font-weight:700;font-size:21px;}
+.ticket .pay .bonus{font-size:12px;color:var(--sun-dark);}
+.ticket.done{background:#E9FBF4;}
+.ticket.failed{background:#FDEDF1;opacity:.85;}
+.ticket .stamp{
+  display:inline-block;font-family:var(--disp);font-weight:700;font-size:13px;
+  border:2px solid;border-radius:8px;padding:2px 8px;transform:rotate(-3deg);margin-top:6px;
+}
+.ticket.done .stamp{color:var(--lime-dark);border-color:var(--lime-dark);}
+.ticket.failed .stamp{color:var(--coral);border-color:var(--coral);}
+.ticket .btn{margin-top:8px;padding:7px 14px;min-height:40px;font-size:15px;}
+
+/* ---------- booking office ---------- */
+.bookRow{margin:14px 0;}
+.bookRow h3{font-size:19px;margin-bottom:8px;}
+.optGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;}
+.optCard{
+  position:relative;text-align:left;background:#fff;border:3px solid var(--ink);border-radius:14px;
+  padding:14px;cursor:pointer;box-shadow:var(--shadow);font-family:"Nunito";touch-action:manipulation;
+}
+.optCard:active{transform:translateY(2px);}
+.optCard .em{font-size:26px;}
+.optCard h4{font-family:var(--disp);font-size:17px;margin:2px 0;}
+.optCard .price{font-family:var(--disp);font-weight:700;font-size:19px;}
+.optCard .buzz{font-size:13px;color:var(--grape);font-weight:800;}
+.optCard .dealtag{
+  position:absolute;top:-12px;right:10px;background:var(--bubble);color:#fff;
+  font-family:var(--disp);font-weight:700;font-size:12px;padding:3px 10px;border-radius:999px;
+  border:2px solid var(--ink);
+}
+.optCard.locked{border-style:dashed;}
+.optCard.chosen{background:#E9FBF4;border-color:var(--lime-dark);}
+.optCard:disabled{cursor:default;}
+.optCard .strike{text-decoration:line-through;opacity:.55;font-size:15px;margin-right:6px;}
+
+/* spend log */
+#spendLog{
+  background:#FFF8E8;border:2px dashed var(--sun-dark);border-radius:12px;
+  padding:10px 14px;font-size:14px;font-weight:700;margin-top:10px;
+}
+#spendLog span{display:inline-block;margin-right:14px;}
+
+/* ---------- incident cards ---------- */
+.incident{border:4px dashed var(--coral);}
+.incident.lucky{border-color:var(--lime-dark);}
+.incident .flash{
+  display:inline-block;background:var(--coral);color:#fff;font-family:var(--disp);font-weight:700;
+  padding:3px 14px;border-radius:999px;margin-bottom:8px;letter-spacing:.05em;
+}
+.incident.lucky .flash{background:var(--lime-dark);}
+
+/* ---------- question modal ---------- */
+.qPanel{
+  background:#FFF6DC;border:3px solid var(--sun-dark);border-radius:14px;
+  padding:14px 16px;margin:8px 0 4px;
+}
+#qText{font-size:19px;font-weight:800;line-height:1.4;}
+.overlay{
+  position:fixed;inset:0;background:rgba(38,33,74,.6);z-index:60;
+  display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:18px 10px 40px;
+}
+.modal{
+  background:#fff;border:3px solid var(--ink);border-radius:20px;
+  width:min(560px,96vw);padding:20px;box-shadow:0 10px 0 rgba(38,33,74,.25);
+  animation:pop .22s ease both;margin:auto 0;
+}
+.q-eyebrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.q-eyebrow .tag{
+  background:var(--tier,#999);color:#fff;font-family:var(--disp);font-weight:700;
+  border-radius:8px;padding:3px 11px;font-size:14px;border:2px solid var(--ink);
+}
+.q-eyebrow .pay{font-family:var(--disp);font-weight:700;font-size:20px;margin-left:auto;}
+#qText{font-size:17.5px;font-weight:700;margin:8px 0;}
+#qHtml table{border-collapse:collapse;margin:8px auto;background:#fff;}
+#qHtml th,#qHtml td{border:2px solid var(--ink);padding:6px 11px;text-align:center;font-size:15px;}
+#qHtml th{background:#FFF1C9;font-family:var(--disp);}
+#qHtml td.qq{background:var(--sun);font-weight:800;}
+.fmt{font-size:13px;color:#6C6694;text-align:center;margin-top:4px;}
+#ansBox{
+  margin:8px auto 4px;max-width:330px;background:#fff;border:3px solid var(--ink);border-radius:14px;
+  min-height:52px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--disp);font-weight:700;font-size:26px;letter-spacing:1px;
+}
+#ansBox.empty{color:#B9B3D6;font-size:16px;font-weight:600;}
+#feedback{text-align:center;font-weight:800;min-height:24px;margin-top:8px;}
+#feedback.good{color:var(--lime-dark);}
+#feedback.bad{color:var(--coral);}
+.hintbox{
+  background:#FFF8E8;border:2px dashed var(--sun-dark);border-radius:12px;
+  padding:10px 13px;font-size:15px;margin-top:8px;
+}
+#keypad{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:330px;margin:12px auto 0;
+}
+#keypad button{
+  font-family:var(--disp);font-weight:700;font-size:21px;min-height:52px;
+  background:#fff;border:3px solid var(--ink);border-radius:13px;box-shadow:0 3px 0 var(--ink);
+  cursor:pointer;touch-action:manipulation;
+}
+#keypad button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
+#keypad button.op{background:#EFEAF7;}
+#keypad button.enter{background:var(--lime);color:#fff;grid-column:span 2;}
+#keypad button.del{background:#FDEDF1;}
+.q-actions{display:flex;gap:10px;justify-content:space-between;margin-top:14px;flex-wrap:wrap;}
+
+/* ---------- bar chart in questions ---------- */
+.bchart{
+  display:flex;align-items:flex-end;gap:14px;height:170px;position:relative;
+  background:#fff;border:2px solid var(--ink);border-radius:12px;max-width:400px;margin:8px auto;
+  background-image:repeating-linear-gradient(to top,transparent 0 32px,#EFEAF7 32px 34px);
+  background-origin:content-box;padding:10px 14px 0 34px;
+}
+.bchart .bar{flex:1;max-width:58px;background:var(--sky);border:2px solid var(--sky-dark);border-radius:6px 6px 0 0;position:relative;}
+.bchart .bar span{
+  position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);
+  font-size:11.5px;font-weight:800;white-space:nowrap;
+}
+.bchart .ylab{position:absolute;left:6px;font-size:11px;font-weight:700;transform:translateY(50%);}
+.bchart-wrap{padding-bottom:30px;}
+
+/* ---------- costing sheet ---------- */
+.sheet{margin-top:12px;}
+.wsrow{
+  display:flex;align-items:center;gap:12px;background:#fff;border:3px solid var(--ink);
+  border-radius:13px;padding:10px 14px;margin:9px 0;box-shadow:var(--shadow);
+}
+.wsrow .info{flex:1;min-width:0;}
+.wsrow h4{font-family:var(--disp);font-size:16.5px;margin:0;}
+.wsrow .topic{font-size:12.5px;color:#6C6694;font-weight:700;}
+.wsrow .cell{
+  font-family:var(--disp);font-weight:700;font-size:18px;min-width:108px;min-height:46px;
+  border:3px dashed var(--grape);border-radius:11px;background:#F7F1FE;cursor:pointer;
+  touch-action:manipulation;
+}
+.wsrow .cell:active{transform:translateY(2px);}
+.wsrow.done{background:#E9FBF4;}
+.wsrow.done .cell{border-style:solid;border-color:var(--lime-dark);background:#fff;cursor:default;}
+.wsrow.locked{opacity:.55;}
+.wsrow.locked .cell{cursor:default;border-color:#B9B3D6;}
+.wsrow.total{border-width:4px;background:#FFF6DC;}
+.wsrow.total h4{font-size:18px;}
+.saverGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px;}
+.saverCard{
+  background:#fff;border:3px solid var(--ink);border-radius:14px;padding:14px;box-shadow:var(--shadow);
+  position:relative;
+}
+.saverCard .tierTag{
+  display:inline-block;font-family:var(--disp);font-weight:700;font-size:12px;color:#fff;
+  background:var(--t-premium);border:2px solid var(--ink);border-radius:8px;padding:2px 9px;margin-bottom:5px;
+}
+.saverCard.solved{background:#E9FBF4;}
+.saverCard.missed{background:#FDEDF1;}
+.saverCard h4{font-family:var(--disp);font-size:17px;margin:2px 0 4px;}
+.saverCard .reward{font-weight:800;color:var(--grape);font-size:14.5px;}
+/* outcome screen */
+.outcome{max-width:540px;margin:0 auto;text-align:center;}
+.outcome .verdict{font-family:var(--disp);font-weight:700;font-size:27px;margin:6px 0;}
+.outcome.good .verdict{color:var(--lime-dark);}
+.outcome.bad .verdict{color:var(--coral);}
+.outcome .lines{margin:10px auto;max-width:380px;text-align:left;}
+.outcome .lines .row{display:flex;justify-content:space-between;font-weight:800;padding:6px 4px;border-bottom:2px dashed #E3DDF2;}
+.btn.warn{background:var(--coral);color:#fff;}
+.resumeCard{
+  background:#FFF6DC;border:3px solid var(--sun-dark);border-radius:14px;padding:14px;margin:12px 0;
+}
+.notice{
+  background:#FDEDF1;border:2px dashed var(--coral);border-radius:12px;
+  padding:9px 13px;font-weight:800;font-size:14.5px;margin-top:10px;
+}
+/* ---------- planning desk ---------- */
+.targetBanner{
+  background:var(--ink);color:#fff;border-radius:13px;padding:10px 14px;margin-top:10px;
+  font-weight:800;font-size:14.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+}
+.targetBanner .em{font-size:21px;}
+.planCat{margin:16px 0 6px;border-radius:14px;}
+.planCat.missing{outline:4px dashed var(--coral);outline-offset:6px;}
+.planCat h3{font-family:var(--disp);font-size:19px;margin-bottom:2px;}
+.catStatus{font-weight:800;font-size:14px;margin-bottom:8px;}
+.catStatus.picked{color:var(--lime-dark);}
+.catStatus.empty{color:var(--coral);}
+.planTracker{
+  display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+  background:#F4F0FB;border:2px dashed var(--grape);border-radius:12px;
+  padding:9px 12px;margin-top:14px;font-weight:800;font-size:14.5px;
+}
+.planTracker span.ok{color:var(--lime-dark);}
+.planTracker span.todo{color:var(--coral);}
+.planGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:12px;}
+.planCard{
+  position:relative;background:#fff;border:3px solid var(--ink);border-radius:14px;
+  padding:13px;box-shadow:var(--shadow);text-align:left;font-family:"Nunito";
+}
+.planCard h4{font-family:var(--disp);font-size:16.5px;margin:2px 0;}
+.planCard .em{font-size:25px;}
+.planCard .rule{font-size:13.5px;font-weight:700;color:#534D7A;background:#F4F0FB;border-radius:9px;padding:6px 9px;margin:6px 0;}
+.planCard .buzzTag{font-size:13px;font-weight:800;color:var(--grape);}
+.planCard .priceArea{margin-top:8px;}
+.planCard .price{font-family:var(--disp);font-weight:700;font-size:20px;}
+.planCard .topic{font-size:12px;color:#6C6694;font-weight:700;}
+.planCard.chosen{background:#E9FBF4;border-color:var(--lime-dark);}
+.planCard .smallbtn{
+  font-family:var(--disp);font-weight:600;font-size:14.5px;border:3px solid var(--ink);
+  border-radius:11px;padding:7px 13px;background:var(--sun);box-shadow:0 3px 0 var(--ink);
+  cursor:pointer;touch-action:manipulation;margin-top:6px;margin-right:6px;
+}
+.planCard .smallbtn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
+.planCard .smallbtn.choose{background:var(--lime);color:#fff;}
+.planCard .chosenTag{font-weight:800;color:var(--lime-dark);margin-top:6px;}
+/* model slip */
+.slipIntro{background:#FFF6DC;border:3px solid var(--sun-dark);border-radius:13px;padding:11px 14px;font-weight:800;margin-top:10px;}
+/* endings */
+.endingCard{
+  background:linear-gradient(135deg,#FFF6DC,#FDE7F3);border:3px solid var(--ink);border-radius:16px;
+  padding:16px;text-align:center;margin:12px 0;
+}
+.endingCard .em{font-size:46px;display:block;}
+.endingCard h3{font-family:var(--disp);font-size:23px;margin:4px 0;}
+.endingCard .flavour{font-weight:700;}
+.endingCard .unlockHint{font-size:13.5px;color:#6C6694;font-weight:700;margin-top:6px;}
+.endGallery{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+.endSlot{
+  width:46px;height:46px;border:3px solid var(--ink);border-radius:12px;background:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:23px;
+}
+.endSlot.locked{background:#EFEAF7;color:#B9B3D6;font-family:var(--disp);font-weight:700;font-size:17px;}
+/* ---------- reports ---------- */
+.reportlist{margin-top:10px;}
+.reportlist .row{
+  display:flex;justify-content:space-between;gap:10px;padding:7px 4px;
+  border-bottom:2px dashed #E3DDF2;font-weight:700;font-size:15.5px;
+}
+.reportlist .row b.plus{color:var(--lime-dark);}
+.reportlist .row b.minus{color:var(--coral);}
+.bigscore{font-family:var(--disp);font-weight:700;font-size:52px;text-align:center;}
+.scorelabel{text-align:center;font-weight:800;color:#6C6694;font-size:13px;text-transform:uppercase;letter-spacing:.08em;}
+.stars{font-size:34px;text-align:center;letter-spacing:.12em;margin:4px 0;}
+.accbar{height:15px;border:2px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden;}
+.accbar i{display:block;height:100%;background:var(--grape);border-radius:999px;min-width:4px;}
+.accrow{display:grid;grid-template-columns:150px 1fr 48px;gap:9px;align-items:center;font-size:14px;font-weight:800;margin:5px 0;}
+.stampBig{
+  display:inline-block;font-family:var(--disp);font-weight:700;font-size:24px;letter-spacing:.06em;
+  border:4px solid;border-radius:12px;padding:5px 16px;transform:rotate(-7deg);
+}
+.stampBig.ok{color:var(--lime-dark);border-color:var(--lime-dark);}
+.stampBig.no{color:var(--coral);border-color:var(--coral);}
+#finalCard{
+  background:#FFFDF6;border:3px solid var(--ink);border-radius:14px;padding:18px;position:relative;
+}
+#finalCard::before{content:"";position:absolute;inset:7px;border:2px dashed var(--ink);border-radius:9px;opacity:.4;pointer-events:none;}
+.dayPills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0;}
+.dayPill{
+  background:#fff;border:3px solid var(--ink);border-radius:13px;padding:8px 13px;text-align:center;
+  font-weight:800;font-size:13.5px;min-width:118px;
+}
+.dayPill .em{font-size:23px;display:block;}
+
+/* ---------- start screen ---------- */
+.tripStrip{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+.tripCard{
+  flex:1;min-width:160px;background:#fff;border:3px solid var(--ink);border-radius:14px;
+  padding:12px;text-align:center;box-shadow:var(--shadow);
+}
+.tripCard .em{font-size:34px;}
+.tripCard h3{font-size:16px;}
+.tripCard .diff{font-size:12px;font-weight:800;color:var(--bubble);}
+input.nameBox{
+  font-family:"Nunito";font-weight:700;font-size:18px;width:100%;max-width:330px;
+  padding:12px 14px;border:3px solid var(--ink);border-radius:14px;background:#fff;
+}
+.bestBanner{
+  background:var(--ink);color:#fff;border-radius:12px;padding:9px 14px;margin-top:12px;
+  font-weight:800;font-size:14.5px;
+}
+.rules{margin:10px 0 0 0;padding-left:22px;font-size:15.5px;}
+.rules li{margin:5px 0;}
+.toastWrap{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:80;}
+.toast{
+  background:var(--ink);color:#fff;font-family:var(--disp);font-weight:600;
+  padding:10px 18px;border-radius:999px;box-shadow:var(--shadow);animation:pop .2s ease both;
+}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header id="hud">
+    <div class="logo">🎒 ERA WEEK: <b>TRIP TYCOON</b></div>
+    <div class="spacer"></div>
+    <span class="chip"><span class="lab">Day</span> <span id="hudDay">1</span>/3</span>
+    <span class="chip" id="chipCash">💰 <span id="hudCash">£0</span></span>
+    <span class="chip">🎉 <span class="lab">Buzz</span> <span id="hudBuzz">0</span></span>
+    <span class="chip" id="chipStreak">⚡ <span id="hudStreak">0</span></span>
+  </header>
+
+  <div id="dayBanner" class="hidden">
+    <span class="big" id="dbEmoji">🦁</span>
+    <div>
+      <h2 id="dbTitle">Day 1: Safari Zoo</h2>
+      <div class="muted" id="dbSub">Raise the money, book the trip, survive the day!</div>
+    </div>
+    <div id="stageDots">
+      <span class="sdot" data-s="0">☀️ Cash builder</span>
+      <span class="sdot" data-s="1">🏷️ Booking office</span>
+      <span class="sdot" data-s="2">🚌 Trip day</span>
+    </div>
+  </div>
+
+  <main id="stage"></main>
+</div>
+
+<!-- question modal -->
+<div class="overlay hidden" id="qOverlay">
+  <div class="modal">
+    <div class="q-eyebrow">
+      <span class="tag" id="qTier">Standard</span>
+      <span class="muted" id="qTopic">7.3.16</span>
+      <span class="pay" id="qPay"></span>
+    </div>
+    <div class="qPanel">
+      <div id="qText"></div>
+      <div id="qHtml"></div>
+    </div>
+    <div class="fmt" id="qFmt"></div>
+    <div id="ansBox" class="empty">type your answer</div>
+    <div id="feedback"></div>
+    <div class="hintbox hidden" id="hintBox"></div>
+    <div id="keypad"></div>
+    <div class="q-actions">
+      <button class="btn" id="qBackBtn">← Back (don't answer)</button>
+    </div>
+  </div>
+</div>
+
+<div class="toastWrap hidden" id="toastWrap"><div class="toast" id="toastMsg"></div></div>
+<script>
+"use strict";
+/* ================= helpers ================= */
+const $=id=>document.getElementById(id);
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]);
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const money=n=>(n<0?"−£":"£")+Math.abs(n).toLocaleString("en-GB",{maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const Store={
+  get(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+const REC_KEY="eraWeekTycoonRecords_v1";
+let toastT=null;
+function toast(msg){
+  $("toastMsg").textContent=msg;$("toastWrap").classList.remove("hidden");
+  clearTimeout(toastT);toastT=setTimeout(()=>$("toastWrap").classList.add("hidden"),2300);
+}
+
+/* ================= constants ================= */
+const TIERS={
+  budget:{label:"Warm-up",pay:150,col:"var(--t-budget)"},
+  standard:{label:"Standard",pay:250,col:"var(--t-standard)"},
+  premium:{label:"Tricky",pay:400,col:"var(--t-premium)"},
+  ambitious:{label:"Mega",pay:650,col:"var(--t-ambitious)"}
+};
+const STRANDS={
+  "7.1":"Number & data","7.2":"Number properties","7.3":"Fractions & ratio",
+  "7.4":"Directed number","7.5":"Algebra"
+};
+const PUPILS=30; // your form group
+const DAYS=[
+  { em:"🦁", name:"Safari Zoo", sub:"A classic day out — keep it cheap and cheerful!",
+    boardMix:["budget","budget","standard","standard","premium"], payMult:1,
+    fundraisers:[["🧁","Bake sale"],["🧽","Car wash"],["🎟️","Raffle tickets"],["🍬","Tuck shop"],["🤫","Sponsored silence"]],
+    unlockTier:"budget", incidentTier:"standard", float:500 },
+  { em:"🎢", name:"Thrill Valley Theme Park", sub:"Bigger trip, bigger bills — earn hard this morning!",
+    boardMix:["standard","standard","premium","premium","ambitious"], payMult:1.2,
+    fundraisers:[["🎮","Games tournament"],["🍿","Movie night"],["🧦","Crazy sock day"],["🎤","Talent show"],["🍕","Pizza Friday"]],
+    unlockTier:"standard", incidentTier:"premium", float:500 },
+  { em:"🚆", name:"London Science Museum", sub:"The big one. Trains, tickets and tourist prices!",
+    boardMix:["standard","premium","premium","ambitious","ambitious"], payMult:1.5,
+    fundraisers:[["🧠","Quiz night"],["🏃","Fun run"],["📚","Book swap"],["🎨","Art auction"],["🧊","Ice lolly stall"]],
+    unlockTier:"premium", incidentTier:"ambitious", float:600 }
+];
+const ERA_TITLE=["","Safari Zoo","Thrill Valley","London"];
+
+/* ================= state ================= */
+let S=null, REC=loadRec();
+function blankStats(){const o={};Object.keys(STRANDS).forEach(k=>o[k]={a:0,c:0});return o;}
+function loadRec(){return Store.get(REC_KEY)||{bestScore:0,bestBank:0,longestStreak:0,weeks:0};}
+function newGame(name){
+  return{
+    name, day:1, stage:0,            // stage 0 cash builder, 1 booking, 2 trip
+    bookPhase:"plan",                // plan | slip | savers
+    cash:0, buzz:0,
+    streak:0, bestStreak:0,
+    orders:[], skipWarn:false, earnedToday:0,
+    firstTry:0, totalQ:0, dayFirst:0, dayQ:0, stats:blankStats(),
+    dayLog:[], dayClosed:false, ptaLoan:0,
+    spentToday:0, buzzToday:0,
+    planState:{priced:{},chosen:{}}, slip:[],
+    targetsMet:0, dayTargetMet:false,
+    stretchTried:0, stretchSolved:0,
+    savers:[],
+    incidents:[], incidentsDone:0, legendDone:false,
+  };
+}
+
+/* =====================================================
+   QUESTION GENERATORS — trip & fundraiser themed
+   Each returns {topic, strand, text, html?, answer, kind, fmt, hint}
+   kinds: num | frac | exact | expr
+   ===================================================== */
+const STALLS=["cake stall","car wash","raffle table","tuck shop","quiz night","fun run","ice lolly stall","book swap"];
+const SNACKS=["flapjacks","cupcakes","cookies","brownies","smoothies","popcorn bags"];
+const GENS={
+/* ---------- 7.1 application of number ---------- */
+placeValue(){ // budget
+  let n,digits,d;
+  do{n=ri(10234,98765);digits=String(n).split("");d=pick(digits.filter(x=>x!=="0"));}
+  while(digits.filter(x=>x===d).length!==1);
+  const idx=digits.indexOf(d),place=[10000,1000,100,10,1][idx];
+  return{topic:"7.1.1 Place value",strand:"7.1",
+    text:`Your raffle ticket is number ${n.toLocaleString("en-GB")}. What is the value of the digit ${d} in this number?`,
+    answer:Number(d)*place,kind:"num",fmt:"Give a number, e.g. 4000",
+    hint:`Write the number in columns: ten-thousands, thousands, hundreds, tens, ones. The digit ${d} sits in the ${["ten-thousands","thousands","hundreds","tens","ones"][idx]} column.`};
+},
+addSubMoney(){ // budget
+  const a=ri(120,480),b=ri(60,a-30);
+  return{topic:"7.1.2 Addition and subtraction",strand:"7.1",
+    text:`The trip fund had £${a} in it. The class spends £${b} on supplies for the ${pick(STALLS)}. How much is left in the fund?`,
+    answer:a-b,kind:"num",fmt:"Amount in £ (number only)",
+    hint:`Work out ${a} − ${b}. Try counting up from ${b} to ${a}, or use the column method.`};
+},
+barChart(){ // standard
+  const names=shuffle(SNACKS).slice(0,4);
+  const vals=shuffle([20,30,40,50,60,70,80,90]).slice(0,4);
+  let i=ri(0,3),j;do{j=ri(0,3);}while(j===i);
+  if(vals[i]<vals[j])[i,j]=[j,i];
+  const bars=names.map((nm,k)=>`<div class="bar" style="height:${vals[k]*1.5}px"><span>${esc(nm)}</span></div>`).join("");
+  const ylabs=[0,20,40,60,80].map(v=>`<div class="ylab" style="bottom:${v*1.5+10}px">${v}</div>`).join("");
+  return{topic:"7.1.4 Bar charts",strand:"7.1",
+    text:`The bar chart shows bake sale items sold. How many more ${names[i]} were sold than ${names[j]}?`,
+    html:`<div class="bchart-wrap"><div class="bchart">${ylabs}${bars}</div></div>`,
+    answer:vals[i]-vals[j],kind:"num",fmt:"Give a number",
+    hint:`Read the height of each bar against the scale, then subtract: ${names[i]} minus ${names[j]}.`};
+},
+twoWay(tier){ // standard / premium
+  const a=ri(8,20),b=ri(8,20),c=ri(8,20),d=ri(8,20);
+  const grid={bs:a,bn:b,gs:c,gn:d,rowB:a+b,rowG:c+d,colS:a+c,colN:b+d,tot:a+b+c+d};
+  const hide= tier==="premium" ? pick(["rowB","colS","tot"]) : pick(["bs","gn"]);
+  const cell=(v,key)=> key===hide? `<td class="qq">?</td>`:`<td>${v}</td>`;
+  const html=`<table>
+    <tr><th></th><th>Hot dog 🌭</th><th>Burger 🍔</th><th>Total</th></tr>
+    <tr><th>Year 7</th>${cell(a,"bs")}${cell(b,"bn")}${cell(a+b,"rowB")}</tr>
+    <tr><th>Year 8</th>${cell(c,"gs")}${cell(d,"gn")}${cell(c+d,"rowG")}</tr>
+    <tr><th>Total</th>${cell(a+c,"colS")}${cell(b+d,"colN")}${cell(grid.tot,"tot")}</tr></table>`;
+  return{topic:"7.1.5 Two-way tables",strand:"7.1",
+    text:`The food stall kept a tally of sales. Work out the missing value.`,
+    html,answer:grid[hide],kind:"num",fmt:"Give a number",
+    hint:`Every row and column must add up to its total. Find a row or column with only one gap and use addition or subtraction.`};
+},
+freqTree(){ // standard
+  const tot=ri(40,90),y7=ri(15,tot-15),paidY7=ri(5,y7-3),paidY8=ri(5,(tot-y7)-3);
+  const y8=tot-y7;
+  const hide=pick(["y8","notY7","notY8"]);
+  const v={y8:y8,notY7:y7-paidY7,notY8:y8-paidY8};
+  const lab=k=>({y8:"Year 8 pupils",notY7:"Year 7 not yet paid",notY8:"Year 8 not yet paid"}[k]);
+  return{topic:"7.1.3 Frequency trees",strand:"7.1",
+    text:`${tot} pupils signed up for the trip: ${y7} are in Year 7 and the rest are in Year 8. ${paidY7} Year 7s and ${paidY8} Year 8s have paid their deposit. How many is "${lab(hide)}"?`,
+    answer:v[hide],kind:"num",fmt:"Give a number",
+    hint:hide==="y8"?`Year 8 = total − Year 7 = ${tot} − ${y7}.`:`"Not yet paid" = pupils in that year group minus the ones who have paid.`};
+},
+stemLeaf(){ // premium
+  const base=ri(2,5)*10;
+  const leaves=shuffle([1,2,3,4,5,6,7,8,9]).slice(0,5).sort((x,y)=>x-y);
+  const data=leaves.map(l=>base+l);
+  const more=shuffle([1,2,4,5,7,8]).slice(0,4).sort((x,y)=>x-y).map(l=>base+10+l);
+  const all=[...data,...more];
+  const askMedian=Math.random()<0.5;
+  const median=all[Math.floor(all.length/2)];
+  const range=all[all.length-1]-all[0];
+  const html=`<table><tr><th>Stem</th><th>Leaf</th></tr>
+    <tr><td>${base/10}</td><td>${leaves.join("&nbsp;&nbsp;")}</td></tr>
+    <tr><td>${base/10+1}</td><td>${more.map(m=>m-base-10).join("&nbsp;&nbsp;")}</td></tr></table>
+    <div class="muted" style="text-align:center">Key: ${base/10} | ${leaves[0]} means ${base+leaves[0]} minutes</div>`;
+  return{topic:"7.1.6 Stem and leaf",strand:"7.1",
+    text:`The stem-and-leaf diagram shows coach journey times in minutes for 9 recent trips. Find the ${askMedian?"MEDIAN":"RANGE"}.`,
+    html,answer:askMedian?median:range,kind:"num",fmt:"Number of minutes",
+    hint:askMedian?`The median is the middle value — with 9 values it's the 5th one when in order.`:`Range = biggest value − smallest value.`};
+},
+/* ---------- 7.2 number properties ---------- */
+fracOfAmount(tier){ // budget(unit) / standard(non-unit)
+  const d=pick([3,4,5,6,8]);const amt=d*ri(4,12);
+  const n=tier==="budget"?1:ri(2,d-1);
+  return{topic:n===1?"7.2.9 Unit fractions of amounts":"7.2.10 Fractions of amounts",strand:"7.2",
+    text:`The ${pick(STALLS)} made £${amt}. ${n===1?`One ${["","","half","third","quarter","fifth","sixth","","eighth"][d]}`:`${n}/${d}`} of the money goes to the trip fund. How much is that?`,
+    answer:amt*n/d,kind:"num",fmt:"Amount in £ (number only)",
+    hint:`Divide £${amt} by ${d} to find one part${n>1?`, then multiply by ${n}`:""}.`};
+},
+squaresRoots(tier){ // budget / standard
+  if(tier==="budget"){
+    const n=ri(3,12);
+    if(Math.random()<0.5)return{topic:"7.2.3a Squares",strand:"7.2",
+      text:`Cupcakes are boxed in a square tray, ${n} rows of ${n}. How many cupcakes fill one tray? (Find ${n}²)`,
+      answer:n*n,kind:"num",fmt:"Give a number",hint:`${n}² means ${n} × ${n}.`};
+    return{topic:"7.2.3a Square roots",strand:"7.2",
+      text:`A square picnic blanket has an area of ${n*n} m². How long is each side? (Find √${n*n})`,
+      answer:n,kind:"num",fmt:"Give a number",hint:`Which number times itself makes ${n*n}?`};
+  }
+  const n=ri(2,6);
+  if(Math.random()<0.5)return{topic:"7.2.3b Cubes",strand:"7.2",
+    text:`Juice cartons are stacked in a cube — ${n} long, ${n} wide, ${n} high. How many cartons is that? (Find ${n}³)`,
+    answer:n**3,kind:"num",fmt:"Give a number",hint:`${n}³ = ${n} × ${n} × ${n}.`};
+  const c=pick([8,27,64,125,216]);
+  return{topic:"7.2.3b Cube roots",strand:"7.2",
+    text:`A cube-shaped cool box holds ${c} ice packs, stacked perfectly. How many along each edge? (Find the cube root of ${c})`,
+    answer:Math.round(Math.cbrt(c)),kind:"num",fmt:"Give a number",
+    hint:`Which number gives ${c} when you multiply it by itself, then by itself again?`};
+},
+lcm(tier){ // standard / premium
+  const pairs=tier==="premium"?[[6,10],[8,12],[9,12],[6,9],[10,12]]:[[4,6],[3,5],[6,8],[2,7],[4,10]];
+  const [a,b]=pick(pairs);
+  const l=(a*b)/gcd(a,b);
+  return{topic:"7.2.1 LCM",strand:"7.2",
+    text:`At the summer fair, the popcorn machine pops every ${a} minutes and the candyfloss machine spins every ${b} minutes. They both go off now. In how many minutes will they next go off together?`,
+    answer:l,kind:"num",fmt:"Number of minutes",
+    hint:`List the multiples of ${a} (${a}, ${a*2}, ${a*3}…) and of ${b} (${b}, ${b*2}, ${b*3}…). Find the first number in both lists.`};
+},
+primes(){ // standard
+  const sets=[[21,27,31,33],[25,29,35,39],[33,37,49,51],[27,41,49,55],[39,43,49,57]];
+  const set=pick(sets);const data={21:0,27:0,31:31,33:0,25:0,29:29,35:0,39:0,37:37,49:0,51:0,41:41,55:0,43:43,57:0};
+  const ans=set.find(n=>data[n]);
+  return{topic:"7.2.4 Prime numbers",strand:"7.2",
+    text:`Lockers ${set.join(", ")} are free for storing the trip kit. The teacher wants the PRIME numbered one. Which is it?`,
+    answer:ans,kind:"num",fmt:"Give the prime number",
+    hint:`A prime has exactly two factors: 1 and itself. Check each number for small factors like 3 and 7.`};
+},
+factors(){ // standard
+  const n=pick([12,18,20,24,28,30,36]);
+  const count=[...Array(n)].filter((_,i)=>n%(i+1)===0).length;
+  return{topic:"7.2.5 Factors",strand:"7.2",
+    text:`${n} pupils must line up in equal rows for the register — every row the same size. How many different row sizes are possible? (Count ALL the factors of ${n}.)`,
+    answer:count,kind:"num",fmt:"Give a number",
+    hint:`Find factor pairs of ${n}: 1×${n}, 2×${n/2}… Count every factor, including 1 and ${n}.`};
+},
+divisionWord(tier){ // standard / premium (round up)
+  if(tier==="standard"){
+    const k=pick([6,7,8,9]),q=ri(12,30),T=k*q;
+    return{topic:"7.2.7 Division",strand:"7.2",
+      text:`The fun run raised £${T}, shared equally between ${k} school charities. How much does each charity get?`,
+      answer:q,kind:"num",fmt:"Amount in £ (number only)",
+      hint:`Work out ${T} ÷ ${k}. Times-table facts for ${k} will get you there.`};
+  }
+  const cap=pick([15,16,17]),kids=ri(50,120);
+  const need=Math.ceil(kids/cap);
+  return{topic:"7.2.8 Problems with the four operations",strand:"7.2",
+    text:`Minibuses seat ${cap} pupils each, and ${kids} pupils need a ride to the station. How many minibuses must be booked?`,
+    answer:need,kind:"num",fmt:"Number of minibuses",
+    hint:`Work out ${kids} ÷ ${cap}. If there's a remainder you must round UP — everyone needs a seat!`};
+},
+divisibility(){ // premium
+  const target=pick([3,4,6,9]);
+  let nums=[],ans=0;
+  while(true){
+    nums=shuffle([ri(100,999),ri(100,999),ri(100,999),ri(100,999)]);
+    const hits=nums.filter(n=>n%target===0);
+    if(hits.length===1){ans=hits[0];break;}
+  }
+  return{topic:"7.2.6 Divisibility",strand:"7.2",
+    text:`Prize tokens come in these amounts: ${nums.join(", ")}. Only ONE can be split exactly into groups of ${target}. Which one?`,
+    answer:ans,kind:"num",fmt:"Give the number",
+    hint:target===3||target===9?`A number divides by ${target} if its digit sum divides by ${target}.`:
+         target===4?`A number divides by 4 if its last two digits divide by 4.`:
+         `A number divides by 6 if it's even AND its digit sum divides by 3.`};
+},
+hcf(){ // premium
+  const f=pick([4,6,8,9,12]);
+  let a=f*ri(2,7),b=f*ri(2,7);
+  while(gcd(a,b)!==f||a===b){a=f*ri(2,7);b=f*ri(2,7);}
+  return{topic:"7.2.13 HCF",strand:"7.2",
+    text:`You have ${a} keyrings and ${b} stickers to make identical goody bags with nothing left over. What is the GREATEST number of goody bags you can make? (Find the HCF of ${a} and ${b}.)`,
+    answer:f,kind:"num",fmt:"Give a number",
+    hint:`Find the biggest number that divides into both ${a} and ${b} exactly.`};
+},
+primeFactor(){ // premium
+  const opts=[[60,"2² × 3 × ?",5],[90,"2 × 3² × ?",5],[84,"2² × 3 × ?",7],[150,"2 × 3 × 5 × ?",5],[126,"2 × 3² × ?",7]];
+  const [n,expr,ans]=pick(opts);
+  return{topic:"7.2.12 Prime factorisation",strand:"7.2",
+    text:`Exactly ${n} pupils are going on the big trip. Their teacher writes ${n} as a product of primes: ${n} = ${expr}. What number is the "?"`,
+    answer:ans,kind:"num",fmt:"Give a prime number",
+    hint:`Work out the value of the part you can see, then divide ${n} by it.`};
+},
+fourOps(){ // ambitious
+  const a=ri(3,7),pa=ri(4,9),b=ri(2,6),pb=ri(3,8);
+  const spend=a*pa+b*pb;
+  const paywith=Math.ceil(spend/10)*10+ri(1,3)*10;
+  return{topic:"7.2.8 Problems with the four operations",strand:"7.2",
+    text:`At the cash-and-carry you buy ${a} crates of juice at £${pa} each and ${b} boxes of snacks at £${pb} each. You pay with £${paywith}. How much change should you get?`,
+    answer:paywith-spend,kind:"num",fmt:"Amount in £ (number only)",
+    hint:`Step 1: ${a} × £${pa}. Step 2: ${b} × £${pb}. Step 3: add them. Step 4: subtract from £${paywith}.`};
+},
+/* ---------- 7.3 fractions & ratio ---------- */
+equivFrac(){ // budget
+  const d=pick([3,4,5,6]),n=ri(1,d-1),k=ri(2,6);
+  return{topic:"7.3.3 Equivalent fractions",strand:"7.3",
+    text:`Fill in the missing number: ${n}/${d} = ?/${d*k}`,
+    answer:n*k,kind:"num",fmt:"Give the missing number",
+    hint:`The bottom was multiplied by ${k} (${d} → ${d*k}), so the top must be multiplied by ${k} too.`};
+},
+simplifyFracQ(){ // budget
+  const f=pick([2,3,4,5,6]);let n=ri(1,9),d=ri(n+1,12);
+  const g=gcd(n,d);n/=g;d/=g;
+  return{topic:"7.3.5 Simplifying fractions",strand:"7.3",
+    text:`${n*f}/${d*f} of the class brought a packed lunch. Write this fraction in its simplest form.`,
+    answer:[n,d],kind:"frac",fmt:"Type a fraction like 3/4",
+    hint:`Find a number that divides into both ${n*f} and ${d*f}. Keep simplifying until you can't.`};
+},
+fracOfAnother(){ // standard
+  const d=pick([3,4,5,6]);let n=ri(1,d-1);
+  while(gcd(n,d)!==1)n=ri(1,d-1);
+  const k=ri(3,8);
+  const part=n*k,whole=d*k;
+  return{topic:"7.3.7 One number as a fraction of another",strand:"7.3",
+    text:`${part} of the ${whole} raffle prizes have been claimed. What fraction is that, in its simplest form?`,
+    answer:[n,d],kind:"frac",fmt:"Type a fraction like 3/4",
+    hint:`Write ${part}/${whole}, then divide top and bottom by their highest common factor.`};
+},
+addSubFrac(tier){ // standard (same denom→simplify) / premium (different denoms)
+  if(tier==="standard"){
+    const d=pick([6,8,10,12]);let a=ri(1,d-2),b=ri(1,d-a-1);
+    const s=a+b,g=gcd(s,d);
+    return{topic:"7.3.8 Add and subtract fractions",strand:"7.3",
+      text:`On sports day, ${a}/${d} of pupils chose football and ${b}/${d} chose rounders. What fraction chose one of these two? Give your answer in its simplest form.`,
+      answer:[s/g,d/g],kind:"frac",fmt:"Type a fraction like 3/4",
+      hint:`Same denominators — add the tops: ${a} + ${b} = ${s}, keep the ${d}. Then simplify.`};
+  }
+  const pairs=[[2,3],[3,4],[2,5],[3,5],[4,5],[5,6]];
+  const [d1,d2]=pick(pairs);const n1=ri(1,d1-1),n2=ri(1,d2-1);
+  const den=d1*d2/gcd(d1,d2);
+  const num=n1*den/d1+n2*den/d2;
+  const g=gcd(num,den);
+  return{topic:"7.3.8 Add and subtract fractions",strand:"7.3",
+    text:`You spend ${n1}/${d1} of your pocket money on snacks and ${n2}/${d2} on a souvenir. What fraction have you spent in total? Simplify if you can. (Improper fractions like 7/6 are fine!)`,
+    answer:[num/g,den/g],kind:"frac",fmt:"Type a fraction like 7/6",
+    hint:`Use a common denominator of ${den}: ${n1}/${d1} = ${n1*den/d1}/${den} and ${n2}/${d2} = ${n2*den/d2}/${den}. Then add the tops.`};
+},
+multFrac(){ // standard
+  const d1=pick([2,3,4,5]),d2=pick([3,4,5,6]);
+  const n1=ri(1,d1-1),n2=ri(1,d2-1);
+  const num=n1*n2,den=d1*d2,g=gcd(num,den);
+  return{topic:"7.3.9 Multiply fractions",strand:"7.3",
+    text:`Work out ${n1}/${d1} × ${n2}/${d2}. Give your answer in its simplest form.`,
+    answer:[num/g,den/g],kind:"frac",fmt:"Type a fraction like 3/4",
+    hint:`Multiply the tops (${n1} × ${n2}) and the bottoms (${d1} × ${d2}), then simplify.`};
+},
+divFrac(){ // premium
+  const d1=pick([2,3,4]),d2=pick([2,3,4,5]);
+  const n1=ri(1,d1-1),n2=ri(1,d2-1);
+  const num=n1*d2,den=d1*n2,g=gcd(num,den);
+  return{topic:"7.3.11 Divide fractions",strand:"7.3",
+    text:`Work out ${n1}/${d1} ÷ ${n2}/${d2}. Give your answer in its simplest form.`,
+    answer:[num/g,den/g],kind:"frac",fmt:"Type a fraction like 3/2",
+    hint:`Keep the first fraction, flip the second, and multiply: ${n1}/${d1} × ${d2}/${n2}.`};
+},
+simplifyRatio(tier){ // budget / standard
+  const f=tier==="budget"?pick([2,3,4,5]):pick([4,6,7,8,9]);
+  let a=ri(2,9),b=ri(2,9);while(gcd(a,b)!==1||a===b){a=ri(2,9);b=ri(2,9);}
+  return{topic:"7.3.14 Simplify ratios",strand:"7.3",
+    text:`The smoothie recipe uses ${a*f} strawberries to ${b*f} bananas. Write the ratio ${a*f} : ${b*f} in its simplest form.`,
+    answer:[`${a}:${b}`,`${a}:${b}`.replace(":"," : ")],kind:"exact",fmt:"Type a ratio like 3:4",
+    hint:`Divide both sides by the same number until you can't any more. Try dividing by ${f}.`};
+},
+shareRatio(){ // premium
+  const a=ri(2,5);let b=ri(2,7);while(b===a)b=ri(2,7);
+  const per=ri(4,15)*1,T=(a+b)*per;
+  return{topic:"7.3.16 Sharing with ratios",strand:"7.3",
+    text:`The bake sale profit of £${T} is shared between the trip fund and charity in the ratio ${a} : ${b}. How much does the TRIP FUND get?`,
+    answer:a*per,kind:"num",fmt:"Amount in £ (number only)",
+    hint:`${a} + ${b} = ${a+b} parts. One part = £${T} ÷ ${a+b}. The trip fund gets ${a} parts.`};
+},
+ratioDiff(){ // ambitious
+  const a=ri(2,5);let b=a+ri(1,4);
+  const per=ri(3,12),diff=(b-a)*per;
+  return{topic:"7.3.17 Ratio problems",strand:"7.3",
+    text:`Hot chocolates and teas were sold in the ratio ${a} : ${b}. There were ${diff} MORE teas sold than hot chocolates. How many drinks were sold in TOTAL?`,
+    answer:(a+b)*per,kind:"num",fmt:"Give a number",
+    hint:`The difference is ${b} − ${a} = ${b-a} parts, which equals ${diff}. So one part = ${per}. The total is ${a+b} parts.`};
+},
+/* ---------- 7.4 directed number ---------- */
+temperature(){ // budget
+  const t1=ri(-12,-2),change=ri(5,15);
+  const up=Math.random()<0.5;
+  return{topic:"7.4.3 Working with temperature",strand:"7.4",
+    text:`The ice-cream van's freezer is at ${t1}°C. The temperature ${up?"rises":"falls"} by ${change} degrees. What is the new temperature?`,
+    answer:up?t1+change:t1-change,kind:"num",fmt:"Temperature in °C (e.g. −3)",
+    hint:`Start at ${t1} on a number line and move ${change} steps ${up?"up (right)":"down (left)"}.`};
+},
+addSubNeg(){ // budget
+  const a=ri(-12,12);let b=ri(2,12);
+  const sub=Math.random()<0.5;
+  return{topic:"7.4.4 Add and subtract integers",strand:"7.4",
+    text:`Work out ${a} ${sub?"−":"+"} ${b<0?`(${b})`:b}.`,
+    answer:sub?a-b:a+b,kind:"num",fmt:"Give a number (use − for negatives)",
+    hint:`Use a number line: start at ${a} and move ${b} steps ${sub?"down":"up"}.`};
+},
+multDivNeg(){ // standard
+  const a=pick([-2,-3,-4,-5,-6]),b=ri(2,9);
+  if(Math.random()<0.5)return{topic:"7.4.5 Multiply integers",strand:"7.4",
+    text:`The tuck shop loses £${-a} every day it rains. Rain is forecast for ${b} days. Work out ${a} × ${b} to find the total change in £.`,
+    answer:a*b,kind:"num",fmt:"Give a number (use − for negatives)",
+    hint:`${-a} × ${b} = ${-a*b}. A negative times a positive is negative.`};
+  return{topic:"7.4.6 Divide integers",strand:"7.4",
+    text:`Work out ${a*b} ÷ ${b}.`,
+    answer:a,kind:"num",fmt:"Give a number (use − for negatives)",
+    hint:`First do ${-a*b} ÷ ${b}, then think about the sign: negative ÷ positive = negative.`};
+},
+mixedNeg(){ // premium
+  const a=pick([-3,-4,-5]),b=ri(2,6),c=ri(-8,-2);
+  return{topic:"7.4.7 Mixed operations with negatives",strand:"7.4",
+    text:`Work out ${a} × ${b} − ${c<0?`(${c})`:c}.`,
+    answer:a*b-c,kind:"num",fmt:"Give a number (use − for negatives)",
+    hint:`First ${a} × ${b} = ${a*b}. Subtracting ${c} (a negative) is the same as ADDING ${-c}.`};
+},
+orderOps(tier){ // standard / premium
+  if(tier==="standard"){
+    const a=ri(2,9),b=ri(2,9),c=ri(2,6);
+    return{topic:"7.4.9 Order of operations",strand:"7.4",
+      text:`The stall takings are worked out as ${a} + ${b} × ${c} in £. What's the correct total?`,
+      answer:a+b*c,kind:"num",fmt:"Give a number",
+      hint:`Multiplication before addition: work out ${b} × ${c} first, then add ${a}.`};
+  }
+  const a=ri(2,6),b=ri(2,6),c=ri(2,5),d=ri(2,4);
+  return{topic:"7.4.9 Order of operations",strand:"7.4",
+    text:`Work out ${a} × (${b} + ${c}) − ${d}².`,
+    answer:a*(b+c)-d*d,kind:"num",fmt:"Give a number",
+    hint:`Brackets first (${b} + ${c} = ${b+c}), then the square (${d}² = ${d*d}), then multiply, then subtract.`};
+},
+/* ---------- 7.5 algebra ---------- */
+collectTerms(tier){ // budget / standard
+  if(tier==="budget"){
+    const a=ri(2,8),b=ri(2,8);
+    return{topic:"7.5.4 Collect like terms",strand:"7.5",
+      text:`Simplify ${a}y + ${b}y.`,
+      answer:{x:a+b,c:0},kind:"expr",fmt:`Expression like ${a+b}y`,
+      hint:`${a} y's plus ${b} more y's — add the numbers in front and keep the y.`};
+  }
+  const a=ri(2,8),b=ri(2,8),c=ri(4,12),d=ri(1,c-1);
+  return{topic:"7.5.4 Collect like terms",strand:"7.5",
+    text:`Simplify ${a}y + ${c} + ${b}y − ${d}.`,
+    answer:{x:a+b,c:c-d},kind:"expr",fmt:"Expression like 7y+4",
+    hint:`Collect the y terms (${a}y + ${b}y) and the numbers (${c} − ${d}) separately.`};
+},
+substitution(tier){ // standard / premium
+  if(tier==="standard"){
+    const a=ri(2,6),b=ri(1,15),v=ri(2,9);
+    return{topic:"7.5.5 Substitution",strand:"7.5",
+      text:`The coach hire cost in £ is C = ${a}p + ${b}, where p is the number of pupils. Work out C when p = ${v}.`,
+      answer:a*v+b,kind:"num",fmt:"Give a number",
+      hint:`Replace p with ${v}: work out ${a} × ${v} first, then add ${b}.`};
+  }
+  const v=ri(2,5)*-1,k=ri(1,4);
+  return{topic:"7.5.5 Substitution",strand:"7.5",
+    text:`Work out the value of v² − ${k}v when v = ${v}.`,
+    answer:v*v-k*v,kind:"num",fmt:"Give a number",
+    hint:`v² = ${v} × ${v} = ${v*v}. Then ${k}v = ${k} × ${v} = ${k*v}, and subtracting a negative means adding.`};
+},
+expand(){ // standard
+  const k=ri(2,6),a=ri(1,9);
+  const minus=Math.random()<0.4;
+  const co=Math.random()<0.4?ri(2,3):1;
+  const inner=co===1?"y":co+"y";
+  return{topic:"7.5.6 Expand brackets",strand:"7.5",
+    text:`Expand ${k}(${inner} ${minus?"−":"+"} ${a}).`,
+    answer:{x:k*co,c:(minus?-1:1)*k*a},kind:"expr",fmt:`Expression like ${k*co}y${minus?"−":"+"}${k*a}`,
+    hint:`Multiply everything inside the bracket by ${k}: first ${k} × ${inner}, then ${k} × ${minus?"−":""}${a}.`};
+},
+eq1(){ // budget
+  const t=ri(1,3);
+  if(t===1){const x=ri(3,15),b=ri(2,20);return{topic:"7.5.10 One-step equations",strand:"7.5",
+    text:`Solve: y + ${b} = ${x+b}`,answer:x,kind:"num",fmt:"Give the value of y",
+    hint:`Undo the +${b} by subtracting ${b} from both sides.`};}
+  if(t===2){const x=ri(3,12),a=ri(2,9);return{topic:"7.5.10 One-step equations",strand:"7.5",
+    text:`Solve: ${a}y = ${a*x}`,answer:x,kind:"num",fmt:"Give the value of y",
+    hint:`Undo the × ${a} by dividing both sides by ${a}.`};}
+  const x=ri(8,25),b=ri(2,7);return{topic:"7.5.10 One-step equations",strand:"7.5",
+    text:`Solve: y − ${b} = ${x-b}`,answer:x,kind:"num",fmt:"Give the value of y",
+    hint:`Undo the −${b} by adding ${b} to both sides.`};
+},
+eq2(){ // standard
+  const x=ri(2,9),a=ri(2,6),b=ri(1,12);
+  const plus=Math.random()<0.6;
+  const rhs=plus?a*x+b:a*x-b;
+  return{topic:"7.5.11 Two-step equations",strand:"7.5",
+    text:`Solve: ${a}y ${plus?"+":"−"} ${b} = ${rhs}`,
+    answer:x,kind:"num",fmt:"Give the value of y",
+    hint:`First ${plus?`subtract ${b} from`:`add ${b} to`} both sides, then divide both sides by ${a}.`};
+},
+eqBrackets(){ // premium
+  const x=ri(2,8),k=ri(2,5),a=ri(1,7);
+  return{topic:"7.5.12 Equations with brackets",strand:"7.5",
+    text:`Solve: ${k}(y + ${a}) = ${k*(x+a)}`,
+    answer:x,kind:"num",fmt:"Give the value of y",
+    hint:`Either expand the bracket first, or divide both sides by ${k} to get y + ${a} = ${x+a}.`};
+},
+eqSplit(){ // ambitious
+  const diff=ri(2,4),x=ri(3,9),b=ri(2,5),a=b+diff;
+  const m=ri(1,diff*x-1),k=diff*x-m;
+  return{topic:"7.5.13 Equations with y on both sides",strand:"7.5",
+    text:`Solve: ${a}y − ${k} = ${b}y + ${m}`,
+    answer:x,kind:"num",fmt:"Give the value of y",
+    hint:`Subtract ${b}y from both sides: ${diff}y − ${k} = ${m}. Then add ${k} and divide by ${diff}.`};
+},
+substFormula(){ // ambitious
+  const a=pick([4,5,6,8]),v=ri(20,60),c=ri(4,20)*5;
+  const target=a*v-c;
+  if(target<=0)return GENS.substFormula();
+  return{topic:"7.5.9 Working backwards",strand:"7.5",
+    text:`The talent show profit in £ is P = ${a}t − ${c}, where t is the number of tickets sold. How many tickets do you need to sell to make a profit of £${target}?`,
+    answer:v,kind:"num",fmt:"Number of tickets",
+    hint:`Put P = ${target} into the formula: ${a}t − ${c} = ${target}. Add ${c} to both sides, then divide by ${a}.`};
+},
+formExpr(){ // standard
+  const a=ri(2,6),b=ri(1,10);
+  return{topic:"7.5.1 Forming expressions",strand:"7.5",
+    text:`A trip T-shirt costs £${a} and postage is £${b} for the whole order. Write an expression for the cost in £ of ordering y number of T-shirts.`,
+    answer:{x:a,c:b},kind:"expr",fmt:`Expression like ${a}y+${b}`,
+    hint:`y T-shirts cost ${a} × y, then add the one-off £${b} postage.`};
+}
+};
+
+/* ---------- tier pools (no angles — financial focus!) ---------- */
+const POOLS={
+  budget:[["placeValue"],["addSubMoney"],["fracOfAmount","budget"],["squaresRoots","budget"],["equivFrac"],
+          ["simplifyFracQ"],["simplifyRatio","budget"],["temperature"],["addSubNeg"],["collectTerms","budget"],["eq1"]],
+  standard:[["barChart"],["twoWay","standard"],["freqTree"],["squaresRoots","standard"],["lcm","standard"],
+            ["primes"],["factors"],["divisionWord","standard"],["fracOfAnother"],["addSubFrac","standard"],
+            ["multFrac"],["simplifyRatio","standard"],["multDivNeg"],["orderOps","standard"],["formExpr"],
+            ["collectTerms","standard"],["substitution","standard"],["expand"],["eq2"]],
+  premium:[["twoWay","premium"],["stemLeaf"],["divisibility"],["hcf"],["primeFactor"],["lcm","premium"],
+           ["divisionWord","premium"],["addSubFrac","premium"],["divFrac"],["shareRatio"],["mixedNeg"],
+           ["orderOps","premium"],["substitution","premium"],["eqBrackets"]],
+  ambitious:[["fourOps"],["ratioDiff"],["eqSplit"],["substFormula"]]
+};
+function genQ(tier){
+  const [name,arg]=pick(POOLS[tier]);
+  const q=GENS[name](arg||tier);
+  q.tier=tier;
+  return q;
+}
+/* ================= answer checking (ported) ================= */
+function normIn(s){return String(s).trim().toLowerCase().replace(/\s+/g,"").replace(/[−–]/g,"-");}
+function parseNum(s){
+  s=normIn(s);
+  if(/^-?\d+\/\d+$/.test(s)){const [n,d]=s.split("/").map(Number);return d?n/d:NaN;}
+  if(/^-?\d*\.?\d+$/.test(s))return parseFloat(s);
+  return NaN;
+}
+function parseExpr(s){
+  s=normIn(s).replace(/[xn]/g,"y");
+  if(!s||/[^0-9y+\-.]/.test(s))return null;
+  let xc=0,cc=0;
+  const terms=s.replace(/-/g,"+-").split("+").filter(t=>t!=="");
+  for(const t of terms){
+    if(t.includes("y")){
+      const co=t.replace("y","");
+      if(co===""||co==="-")xc+=(co==="-"?-1:1);
+      else if(/^-?\d*\.?\d+$/.test(co))xc+=parseFloat(co);
+      else return null;
+    }else{
+      if(/^-?\d*\.?\d+$/.test(t))cc+=parseFloat(t);
+      else return null;
+    }
+  }
+  return{x:xc,c:cc};
+}
+function checkAnswer(q,input){
+  const s=normIn(input);
+  if(s==="")return false;
+  switch(q.kind){
+    case "num":{const v=parseNum(s);return Number.isFinite(v)&&Math.abs(v-q.answer)<1e-6;}
+    case "frac":{const v=parseNum(s);const t=q.answer[0]/q.answer[1];return Number.isFinite(v)&&Math.abs(v-t)<1e-6;}
+    case "exact":{const acc=Array.isArray(q.answer)?q.answer:[q.answer];return acc.some(a=>normIn(a)===s);}
+    case "expr":{const p=parseExpr(s);return !!p&&Math.abs(p.x-q.answer.x)<1e-9&&Math.abs(p.c-q.answer.c)<1e-9;}
+  }
+  return false;
+}
+function answerToString(q){
+  if(q.kind==="frac")return q.answer[0]+"/"+q.answer[1];
+  if(q.kind==="expr"){
+    const {x,c}=q.answer;
+    let s=x===0?"":(x===1?"y":x===-1?"-y":x+"y");
+    if(c!==0)s+=(c>0&&s?"+":"")+c;
+    return s||"0";
+  }
+  return Array.isArray(q.answer)?q.answer[0]:String(q.answer);
+}
+
+/* ================= keypad & question modal ================= */
+/* modes (set on ctx):
+   default    — 1 hint+retry then resolve (cash builder jobs)
+   persistent — unlimited tries, hint after 1 wrong, worked steps after 3; only resolves when correct (costing sheet)
+   oneShot    — single attempt, no hint (savers / legend moments)               */
+const KEYS=["7","8","9","/","4","5","6",":","1","2","3","−","0",".","y","+","C","⌫","↵"];
+let ansStr="",activeCtx=null;
+function buildKeypad(){
+  const kp=$("keypad");kp.innerHTML="";
+  KEYS.forEach(k=>{
+    const b=document.createElement("button");
+    b.type="button";
+    if(k==="↵"){b.className="enter";b.textContent="Check ✓";}
+    else if(k==="⌫"){b.className="del";b.textContent="⌫";}
+    else if(k==="C"){b.className="del";b.textContent="C";}
+    else if("/:.y+−".includes(k)){b.className="op";b.textContent=k;}
+    else b.textContent=k;
+    b.addEventListener("click",()=>keyPress(k));
+    kp.appendChild(b);
+  });
+}
+function keyPress(k){
+  if(k==="↵"){submitAnswer();return;}
+  if(k==="⌫")ansStr=ansStr.slice(0,-1);
+  else if(k==="C")ansStr="";
+  else if(ansStr.length<14)ansStr+=k==="−"?"-":k;
+  drawAns();
+}
+function drawAns(){
+  const box=$("ansBox");
+  if(ansStr===""){box.classList.add("empty");box.textContent="type your answer";}
+  else{box.classList.remove("empty");box.textContent=ansStr.replace(/-/g,"−");}
+}
+function showQ(ctx){
+  activeCtx=ctx;ansStr="";drawAns();
+  const q=ctx.q,t=TIERS[q.tier]||TIERS.standard;
+  $("qTier").textContent=ctx.tierLabel||t.label;
+  $("qTier").style.background=ctx.tierCol||t.col;
+  $("qTopic").textContent=q.topic+(STRANDS[q.strand]?" · "+STRANDS[q.strand]:"");
+  $("qPay").textContent=ctx.pay?("💰 "+money(ctx.pay)):(ctx.stake||"");
+  $("qText").textContent=q.text;
+  $("qHtml").innerHTML=q.html||"";
+  $("qFmt").textContent=q.fmt||"";
+  $("feedback").textContent="";$("feedback").className="";
+  $("hintBox").classList.add("hidden");
+  $("qBackBtn").classList.toggle("hidden",!ctx.canBack);
+  $("qOverlay").classList.remove("hidden");
+}
+function closeQ(){$("qOverlay").classList.add("hidden");activeCtx=null;}
+function submitAnswer(){
+  const ctx=activeCtx;if(!ctx)return;
+  if(ansStr.trim()==="")return;
+  const ok=checkAnswer(ctx.q,ansStr);
+  recordAttempt(ctx,ok,$("feedback"));
+}
+function recordAttempt(ctx,ok,fb){
+  ctx.attempts=(ctx.attempts||0);
+  const firstSubmit=ctx.attempts===0;
+  if(firstSubmit){
+    if(ctx.onAttempt)ctx.onAttempt();
+    // accuracy & streak counted on the FIRST submission only
+    S.totalQ++;S.dayQ++;
+    S.stats[ctx.q.strand]&&S.stats[ctx.q.strand].a++;
+    if(ok){
+      S.firstTry++;S.dayFirst++;
+      S.stats[ctx.q.strand]&&S.stats[ctx.q.strand].c++;
+      S.streak++;S.bestStreak=Math.max(S.bestStreak,S.streak);
+      REC.longestStreak=Math.max(REC.longestStreak,S.streak);
+    }else{
+      S.streak=0;
+    }
+    hud();
+  }
+  ctx.attempts++;
+  if(ctx.syncAttempts)ctx.syncAttempts(ctx.attempts);
+  if(ok){
+    const firstTry=ctx.attempts===1;
+    const hadStreakBonus=ctx.streakAtOpen===true;
+    fb.textContent="✓ Correct!"+(S.streak>=3?" ⚡ Streak bonus active!":"");
+    fb.className="good";
+    setTimeout(()=>{closeQ();ctx.onDone(true,firstTry,hadStreakBonus);},900);
+    return;
+  }
+  // wrong
+  if(ctx.oneShot){
+    fb.textContent=`✗ The answer was ${answerToString(ctx.q)} — no second chances on this one!`;
+    fb.className="bad";
+    setTimeout(()=>{closeQ();ctx.onDone(false,false,false);},1700);
+    return;
+  }
+  if(ctx.persistent){
+    fb.textContent="✗ Not quite — check your working and try again.";
+    fb.className="bad";
+    if(ctx.attempts>=3&&ctx.q.steps){
+      $("hintBox").innerHTML="📖 <b>Worked steps:</b> "+ctx.q.steps;
+      $("hintBox").classList.remove("hidden");
+    }else if(ctx.attempts>=1&&ctx.q.hint){
+      $("hintBox").innerHTML="💡 <b>Hint:</b> "+ctx.q.hint;
+      $("hintBox").classList.remove("hidden");
+    }
+    ansStr="";drawAns();
+    return;
+  }
+  // default: hint then one retry
+  if(ctx.attempts===1){
+    fb.textContent="✗ Not quite — read the hint and try again"+(ctx.pay?" (60% pay)":"");
+    fb.className="bad";
+    $("hintBox").innerHTML="💡 <b>Hint:</b> "+ctx.q.hint;
+    $("hintBox").classList.remove("hidden");
+    ansStr="";drawAns();
+  }else{
+    fb.textContent=`✗ The answer was ${answerToString(ctx.q)}`;
+    fb.className="bad";
+    setTimeout(()=>{closeQ();ctx.onDone(false,false,false);},1700);
+  }
+}
+
+/* ================= HUD ================= */
+function hud(){
+  $("hudDay").textContent=S.day;
+  $("hudCash").textContent=money(S.cash);
+  $("hudBuzz").textContent=S.buzz;
+  $("hudStreak").textContent=S.streak;
+  $("chipStreak").classList.toggle("hot",S.streak>=3);
+}
+function flashCash(){const c=$("chipCash");c.classList.remove("flash");void c.offsetWidth;c.classList.add("flash");hud();}
+function stageDots(){
+  document.querySelectorAll("#stageDots .sdot").forEach(d=>{
+    const s=Number(d.dataset.s);
+    d.classList.toggle("now",s===S.stage);
+    d.classList.toggle("done",s<S.stage);
+  });
+}
+function dayBanner(){
+  const D=DAYS[S.day-1];
+  $("dayBanner").classList.remove("hidden");
+  $("dbEmoji").textContent=D.em;
+  $("dbTitle").textContent=`Day ${S.day}: ${D.name}`;
+  $("dbSub").textContent=D.sub;
+  stageDots();
+}
+
+/* ================= STAGE 0: cash builder ================= */
+function buildOrders(){
+  const D=DAYS[S.day-1];
+  const names=shuffle(D.fundraisers.slice());
+  S.orders=D.boardMix.map((tier,i)=>({
+    id:"o"+S.day+"_"+i,tier,special:false,
+    pay:Math.round(TIERS[tier].pay*D.payMult/10)*10,
+    q:genQ(tier),status:"open",attempts:0,earned:0,
+    ico:names[i][0],job:names[i][1]
+  }));
+  // ⭐ MEGA BONUS job — optional ambitious stretch at double pay
+  S.orders.push({
+    id:"o"+S.day+"_mega",tier:"ambitious",special:true,
+    pay:Math.round(TIERS.ambitious.pay*D.payMult*2/10)*10,
+    q:genQ("ambitious"),status:"open",attempts:0,earned:0,
+    ico:"⭐",job:"Mega bonus job"
+  });
+  S.skipWarn=false;
+}
+function renderCashBuilder(){
+  const D=DAYS[S.day-1];
+  $("stage").innerHTML=`
+    <div class="card">
+      <div class="eyebrow">☀️ Morning · Stage 1 of 3</div>
+      <h2 style="font-size:24px">Cash builder: fund the ${D.em} ${esc(D.name)} trip!</h2>
+      <p>Run the class fundraisers by solving their maths jobs. Harder jobs pay more — and <b>3 first-try corrects in a row</b> makes every job pay <b>+50%</b> ⚡. One hint and retry allowed (60% pay). The ⭐ <b>Mega bonus job</b> pays double, but it's seriously tough!</p>
+      ${targetBannerHtml()}
+      <div id="orderGrid"></div>
+      <div class="btnRow">
+        <button class="btn ${S.skipWarn?"warn":"lime"} big" id="toBooking"></button>
+      </div>
+      <p class="muted" style="text-align:center">The school adds a float of <b>${money(D.float)}</b> at the Booking Office. Skipped jobs are gone for good!</p>
+    </div>`;
+  const g=$("orderGrid");
+  S.orders.forEach(o=>{
+    const t=TIERS[o.tier];
+    const div=document.createElement("div");
+    div.className="ticket "+o.status;
+    div.style.setProperty("--tier",o.special?"var(--t-ambitious)":t.col);
+    const bonus=S.streak>=3&&o.status==="open"?`<span class="bonus">+50% ⚡</span>`:"";
+    const stamp=o.status==="done"?`<span class="stamp">EARNED ${money(o.earned)}</span>`
+              :o.status==="failed"?`<span class="stamp">MISSED</span>`:"";
+    div.innerHTML=`
+      <div class="eyebrow">${o.special?"⭐ MEGA · 2× PAY":t.label}</div>
+      <h3>${o.ico} ${esc(o.job)}</h3>
+      <div class="strand">${esc(o.q.topic)}</div>
+      <div class="pay">${money(o.pay)} ${bonus}</div>
+      ${stamp}
+      ${o.status==="open"?`<button class="btn sun">Solve →</button>`:""}`;
+    if(o.status==="open")div.querySelector("button").addEventListener("click",()=>openOrder(o));
+    g.appendChild(div);
+  });
+  const open=S.orders.filter(o=>o.status==="open").length;
+  const btn=$("toBooking");
+  btn.textContent=S.skipWarn
+    ?`⚠️ ${open} job${open>1?"s":""} unsolved — tap again to skip them`
+    :(open?`Done earning — open the Booking Office 🏷️`:`To the Booking Office 🏷️`);
+  btn.addEventListener("click",()=>{
+    const left=S.orders.filter(o=>o.status==="open").length;
+    if(left&&!S.skipWarn){S.skipWarn=true;renderCashBuilder();return;}
+    startBooking();
+  });
+}
+function openOrder(o){
+  showQ({
+    q:o.q,canBack:true,
+    pay:Math.round(o.pay*(S.streak>=3?1.5:1)),
+    streakAtOpen:S.streak>=3,
+    attempts:o.attempts,
+    syncAttempts(n){o.attempts=n;},
+    onAttempt(){S.skipWarn=false;if(o.special&&!o.stretchCounted){o.stretchCounted=true;S.stretchTried++;}},
+    onDone(correct,firstTry,hadStreakBonus){
+      if(correct){
+        if(o.special)S.stretchSolved++;
+        let pay=o.pay;
+        if(hadStreakBonus)pay=Math.round(pay*1.5);
+        if(!firstTry)pay=Math.round(pay*0.6);
+        o.status="done";o.earned=pay;
+        S.cash+=pay;S.earnedToday+=pay;
+        flashCash();
+        toast(`💰 ${money(pay)} earned for the trip fund!`);
+      }else{
+        o.status="failed";
+        toast("That job's closed — pick another!");
+      }
+      save();
+      renderCashBuilder();
+    }
+  });
+}
+/* ================= save / resume ================= */
+const SAVE_KEY="eraWeekTycoonSave_v2";
+function save(){Store.set(SAVE_KEY,S);}
+function clearSave(){Store.set(SAVE_KEY,null);}
+
+/* ================= STAGE 1: booking office — THE PLANNING DESK =================
+   Students choose their OWN trip plan from priced menus. Prices hide behind the
+   pricing rule — compute an option's true cost to unlock choosing it. Then they
+   build the model of their own plan (total, cost per pupil, predicted buzz) and
+   chase the Head's challenge. Different plans = different maths = real modelling. */
+const PLANS=[
+  { // ---------- DAY 1 · SAFARI ZOO ----------
+    target:{maxPerPupil:26,minBuzz:18,bonusCash:60,bonusBuzz:5},
+    cats:[
+      {key:"transport",title:"🚌 Get there (33 travellers: 30 pupils + 3 adults)",opts:[
+        {id:"d1t1",em:"🚐",name:"Minibus convoy",buzz:4,price:270,
+         rule:"Seat 12 each · £90 per bus · every traveller needs a seat",
+         topic:"7.2.8 Division — rounding up",strand:"7.2",
+         text:"Minibuses seat 12 people and cost £90 each. All 33 travellers need a seat. Work out how many minibuses you need, then the TOTAL cost in £.",
+         fmt:"Total cost in £ (number only)",
+         hint:"33 ÷ 12 = 2.75 — can you book part of a bus? Round UP, then multiply by £90.",
+         steps:"33 ÷ 12 = 2.75 → round UP to 3 buses. Then 3 × £90 = £270."},
+        {id:"d1t2",em:"🚌",name:"Luxury coach",buzz:6,price:390,
+         rule:"£13 per pupil · all 30 pupils · adults travel free",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The luxury coach charges £13 per pupil for the 30 pupils (adults free). What is the total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"Work out 30 × 13. Try 3 × 13 = 39, then × 10.",
+         steps:"30 × £13 = £390."},
+        {id:"d1t3",em:"🚂",name:"Steam train special",buzz:7,price:330,
+         rule:"£10 per traveller · all 33 travellers pay",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The steam train charges £10 per traveller, and ALL 33 travellers need a ticket. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"Multiplying by 10 just shifts the digits.",
+         steps:"33 × £10 = £330."}]},
+      {key:"tickets",title:"🎟️ Zoo entry (30 pupils — adults free with school groups)",opts:[
+        {id:"d1k1",em:"🎟️",name:"Gate price",buzz:4,price:360,
+         rule:"£12 per pupil at the gate",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"Gate tickets cost £12 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 12: do 3 × 12 then × 10.",
+         steps:"30 × £12 = £360."},
+        {id:"d1k2",em:"🏷️",name:"Group saver",buzz:4,price:270,
+         rule:"1/4 OFF the £12 gate price · ×30 pupils",
+         topic:"7.2.10 Fractions of amounts",strand:"7.3",
+         text:"The group saver takes 1/4 off the £12 ticket. Work out the discounted price for ONE pupil, then the TOTAL for 30 pupils, in £.",
+         fmt:"Total cost in £ (number only)",
+         hint:"1/4 of £12 = £3, so each ticket is £12 − £3. Then × 30.",
+         steps:"£12 ÷ 4 = £3 off → £9 each. 30 × £9 = £270."},
+        {id:"d1k3",em:"🦁",name:"VIP + keeper talk",buzz:9,price:450,
+         rule:"£15 per pupil · includes meet-the-keeper session",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"VIP entry costs £15 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 15 = 3 × 15 × 10.",
+         steps:"30 × £15 = £450."}]},
+      {key:"food",title:"🍔 Lunch plan (30 pupils · hot meal £5 · packed lunch £2)",opts:[
+        {id:"d1f1",em:"🍔",name:"Mostly hot — ratio 2 : 1",buzz:6,price:120,
+         rule:"Hot : packed = 2 : 1 · hot £5 · packed £2",
+         topic:"7.3.16 Sharing with ratios",strand:"7.3",
+         text:"30 pupils eat in the ratio hot : packed = 2 : 1. Work out how many of each, then the TOTAL cost in £ (hot £5, packed £2).",
+         fmt:"Total cost in £ (number only)",
+         hint:"2 + 1 = 3 parts → 30 ÷ 3 = 10 per part. Hot = 20, packed = 10. Now find the costs.",
+         steps:"20 hot × £5 = £100 and 10 packed × £2 = £20. Total £120."},
+        {id:"d1f2",em:"🥪",name:"Mostly packed — ratio 1 : 2",buzz:4,price:90,
+         rule:"Hot : packed = 1 : 2 · hot £5 · packed £2",
+         topic:"7.3.16 Sharing with ratios",strand:"7.3",
+         text:"30 pupils eat in the ratio hot : packed = 1 : 2. Work out how many of each, then the TOTAL cost in £ (hot £5, packed £2).",
+         fmt:"Total cost in £ (number only)",
+         hint:"1 + 2 = 3 parts → 10 per part. Hot = 10, packed = 20.",
+         steps:"10 × £5 = £50 and 20 × £2 = £40. Total £90."},
+        {id:"d1f3",em:"🍰",name:"Safari banquet",buzz:10,price:180,
+         rule:"Hot meal + pudding for everyone · £6 per pupil",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The Safari banquet costs £6 per pupil for all 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 6.",
+         steps:"30 × £6 = £180."}]}
+    ]},
+  { // ---------- DAY 2 · THRILL VALLEY ----------
+    target:{maxPerPupil:33,minBuzz:20,bonusCash:80,bonusBuzz:6},
+    cats:[
+      {key:"transport",title:"🚌 Get there (33 travellers)",opts:[
+        {id:"d2t1",em:"🚌",name:"MegaCoach (formula price)",buzz:5,price:390,
+         rule:"Price formula: C = 10p + 60, where p = travellers",
+         topic:"7.5.5 Substitution",strand:"7.5",
+         text:"MegaCoach prices with the formula C = 10p + 60, where p is the number of travellers. Work out C in £ when p = 33.",
+         fmt:"Total cost in £ (number only)",
+         hint:"Replace p with 33: do 10 × 33 first, then add 60.",
+         steps:"10 × 33 = 330. Then 330 + 60 = £390."},
+        {id:"d2t2",em:"🚍",name:"Double-decker",buzz:7,price:480,
+         rule:"£16 per pupil · 30 pupils · adults free promo",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The double-decker charges £16 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 16 = 3 × 16 × 10.",
+         steps:"30 × £16 = £480."},
+        {id:"d2t3",em:"🚐",name:"Budget minibuses",buzz:3,price:210,
+         rule:"Seat 11 each · £70 per bus · all 33 need a seat",
+         topic:"7.2.8 Division — rounding up",strand:"7.2",
+         text:"Budget minibuses seat 11 and cost £70 each. All 33 travellers need a seat. How many buses, and what TOTAL cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"33 ÷ 11 divides exactly! Then multiply by £70.",
+         steps:"33 ÷ 11 = 3 buses. 3 × £70 = £210."}]},
+      {key:"tickets",title:"🎢 Ride wristbands (30 pupils)",opts:[
+        {id:"d2k1",em:"🎟️",name:"Standard wristband",buzz:6,price:600,
+         rule:"£20 per pupil",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"Standard wristbands cost £20 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 20.",
+         steps:"30 × £20 = £600."},
+        {id:"d2k2",em:"🏷️",name:"School rate",buzz:5,price:360,
+         rule:"2/5 OFF the £20 wristband · ×30 pupils",
+         topic:"7.2.10 Fractions of amounts",strand:"7.3",
+         text:"The school rate takes 2/5 off the £20 wristband. Work out the discounted price for ONE pupil, then the TOTAL for 30, in £.",
+         fmt:"Total cost in £ (number only)",
+         hint:"£20 ÷ 5 = £4, so 2/5 = £8 off. Each wristband is £12. Then × 30.",
+         steps:"2/5 of £20 = £8 → £12 each. 30 × £12 = £360."},
+        {id:"d2k3",em:"⚡",name:"Fast-track band",buzz:10,price:690,
+         rule:"£23 per pupil · skip every queue",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"Fast-track bands cost £23 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 23 = (30 × 20) + (30 × 3).",
+         steps:"30 × £20 = £600 and 30 × £3 = £90. Total £690."}]},
+      {key:"food",title:"🍕 Lunch plan (30 pupils)",opts:[
+        {id:"d2f1",em:"🍕",name:"Pizza meal deal",buzz:8,price:150,
+         rule:"30 × (main £4 + drink £2) − £30 group discount",
+         topic:"7.4.9 Order of operations",strand:"7.4",
+         text:"The pizza deal costs 30 × (4 + 2) − 30 in £. Use the correct order of operations to find the total.",
+         fmt:"Total cost in £ (number only)",
+         hint:"Brackets first: 4 + 2 = 6. Then × 30, then subtract 30.",
+         steps:"30 × 6 = 180. Then 180 − 30 = £150."},
+        {id:"d2f2",em:"🧺",name:"Picnic — ratio 2 : 1",buzz:5,price:120,
+         rule:"Hot : packed = 2 : 1 · hot £5 · packed £2",
+         topic:"7.3.16 Sharing with ratios",strand:"7.3",
+         text:"30 pupils eat in the ratio hot : packed = 2 : 1 (hot £5, packed £2). Work out how many of each, then the TOTAL cost in £.",
+         fmt:"Total cost in £ (number only)",
+         hint:"3 parts → 10 per part: 20 hot, 10 packed.",
+         steps:"20 × £5 = £100 and 10 × £2 = £20. Total £120."},
+        {id:"d2f3",em:"🍗",name:"Theme-park feast",buzz:10,price:240,
+         rule:"£8 per pupil · burger, fries, ice cream",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The feast costs £8 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 8.",
+         steps:"30 × £8 = £240."}]}
+    ]},
+  { // ---------- DAY 3 · LONDON ----------
+    target:{maxPerPupil:40,minBuzz:24,bonusCash:100,bonusBuzz:8},
+    cats:[
+      {key:"transport",title:"🚆 Get to London (school pays the 3 adults separately)",opts:[
+        {id:"d3t1",em:"🚆",name:"GroupSave train",buzz:6,price:360,
+         rule:"Pay 2/3 of the £18 fare · ×30 pupils",
+         topic:"7.2.10 Fractions of amounts",strand:"7.3",
+         text:"GroupSave means each pupil pays only 2/3 of the £18 fare. Work out ONE fare, then the TOTAL for 30 pupils, in £.",
+         fmt:"Total cost in £ (number only)",
+         hint:"£18 ÷ 3 = £6, so 2/3 = £12 each. Then × 30.",
+         steps:"2/3 of £18 = £12. 30 × £12 = £360."},
+        {id:"d3t2",em:"🚄",name:"Express train",buzz:8,price:450,
+         rule:"£15 per pupil · half the journey time",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The express charges £15 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 15.",
+         steps:"30 × £15 = £450."},
+        {id:"d3t3",em:"🚌",name:"Overnight-cheap coach",buzz:4,price:330,
+         rule:"Price formula: C = 9p + 60, where p = pupils",
+         topic:"7.5.5 Substitution",strand:"7.5",
+         text:"The coach prices with C = 9p + 60, where p is the number of pupils. Work out C in £ when p = 30.",
+         fmt:"Total cost in £ (number only)",
+         hint:"9 × 30 first, then add 60.",
+         steps:"9 × 30 = 270. Then 270 + 60 = £330."}]},
+      {key:"tickets",title:"🔬 Museum plan (30 pupils — museum entry itself is free!)",opts:[
+        {id:"d3k1",em:"📒",name:"Free galleries + workbooks",buzz:3,price:30,
+         rule:"Galleries free · printed workbook £1 per pupil",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The galleries are free, but workbooks cost £1 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 1. (Yes, really!)",
+         steps:"30 × £1 = £30."},
+        {id:"d3k2",em:"🚀",name:"Space exhibit (with claim-back)",buzz:8,price:300,
+         rule:"£12 per pupil, but the school claims 1/6 of the bill back",
+         topic:"7.3.7 Fraction reasoning",strand:"7.3",
+         text:"The Space exhibit costs £12 × 30 pupils, but the school claims 1/6 of the bill back, so you only pay 5/6. What do you ACTUALLY pay, in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × £12 = £360 first. Then £360 ÷ 6 = £60 per sixth — you pay 5 of those sixths.",
+         steps:"£360 ÷ 6 = £60. Pay 5 × £60 = £300."},
+        {id:"d3k3",em:"🎬",name:"IMAX + exhibit combo",buzz:10,price:390,
+         rule:"£13 per pupil · giant-screen space film + exhibit",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The combo costs £13 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 13.",
+         steps:"30 × £13 = £390."}]},
+      {key:"food",title:"🍱 Lunch plan (30 pupils — London prices!)",opts:[
+        {id:"d3f1",em:"🍱",name:"Food-court loyalty deal",buzz:5,price:150,
+         rule:"Meal deal £6 each · every 6th pupil eats FREE",
+         topic:"7.2.8 Multi-step problem",strand:"7.2",
+         text:"Meal deals cost £6 each, but every 6th pupil eats free. For 30 pupils, how many meals do you pay for — and what's the TOTAL in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 ÷ 6 = 5 free meals, so you pay for 25.",
+         steps:"30 − 5 free = 25 meals. 25 × £6 = £150."},
+        {id:"d3f2",em:"🥡",name:"South Ken feast",buzz:9,price:270,
+         rule:"£9 per pupil · noodles, dumplings, the lot",
+         topic:"7.2.2 Multiplication",strand:"7.2",
+         text:"The feast costs £9 per pupil for 30 pupils. Total cost in £?",
+         fmt:"Total cost in £ (number only)",
+         hint:"30 × 9.",
+         steps:"30 × £9 = £270."},
+        {id:"d3f3",em:"🥪",name:"Packed + pizza-slice top-up",buzz:4,price:120,
+         rule:"30 × (packed £2 + slice £3) − £30 bulk saving",
+         topic:"7.4.9 Order of operations",strand:"7.4",
+         text:"This plan costs 30 × (2 + 3) − 30 in £. Use the correct order of operations to find the total.",
+         fmt:"Total cost in £ (number only)",
+         hint:"Brackets first: 2 + 3 = 5. Then × 30, then subtract 30.",
+         steps:"30 × 5 = 150. Then 150 − 30 = £120."}]}
+    ]}
+];
+function dayPlan(){return PLANS[S.day-1];}
+function targetBannerHtml(){
+  const t=dayPlan().target;
+  return `<div class="targetBanner"><span class="em">🎯</span><span><b>Head's challenge:</b> cost per pupil ≤ ${money(t.maxPerPupil)} <b>AND</b> predicted buzz ≥ ${t.minBuzz} → bonus <b>+${money(t.bonusCash)} & +${t.bonusBuzz} buzz</b></span></div>`;
+}
+function findOpt(id){
+  for(const c of dayPlan().cats)for(const o of c.opts)if(o.id===id)return o;
+  return null;
+}
+function startBooking(){
+  const D=DAYS[S.day-1];
+  S.stage=1;S.bookPhase="plan";stageDots();
+  S.cash+=D.float;flashCash();
+  toast(`🏫 School float added: ${money(D.float)}`);
+  S.planState={priced:{},chosen:{}};
+  S.slip=[];
+  S.savers=buildSavers();
+  save();
+  renderPlanner();
+}
+function renderPlanner(){
+  const P=dayPlan();
+  const allChosen=P.cats.every(c=>S.planState.chosen[c.key]);
+  const catEmoji={transport:"🚌",tickets:"🎟️",food:"🍔"};
+  let html=`
+    <div class="card">
+      <div class="eyebrow">🏷️ Late morning · Stage 2 of 3</div>
+      <h2 style="font-size:24px">The planning desk 📋</h2>
+      <p>Build <b>your own</b> trip plan — <b>exactly ONE option from each category</b>. Each option shows its <b>pricing rule</b>, but you must <b>work out its true cost yourself</b> before you can pick it. Price one option per category and gamble, or price several and choose with full information. You can switch your pick at any time before locking in.</p>
+      ${targetBannerHtml()}
+      <div id="spendLog" style="margin-top:10px"><span>💰 In the fund: <b>${money(S.cash)}</b></span><span>🎉 Buzz: <b>${S.buzz}</b></span></div>`;
+  P.cats.forEach(c=>{
+    const pickedId=S.planState.chosen[c.key];
+    const picked=pickedId?findOpt(pickedId):null;
+    html+=`<div class="planCat" data-cat="${c.key}"><h3>${c.title}</h3>
+      <div class="catStatus ${picked?"picked":"empty"}">${picked?`✓ Your pick: ${picked.em} ${esc(picked.name)}`:"⬜ Nothing chosen in this category yet"}</div>
+      <div class="planGrid">`;
+    c.opts.forEach(o=>{
+      const priced=S.planState.priced[o.id];
+      const chosen=pickedId===o.id;
+      html+=`<div class="planCard ${chosen?"chosen":""}">
+        <span class="em">${o.em}</span>
+        <h4>${esc(o.name)}</h4>
+        <div class="rule">${esc(o.rule)}</div>
+        <div class="buzzTag">+${o.buzz} buzz</div>
+        <div class="topic">${esc(o.topic)}</div>
+        <div class="priceArea">
+          ${priced?`<span class="price">${money(o.price)}</span>`:`<span class="price" style="color:#B9B3D6">£ ???</span>`}
+        </div>
+        ${chosen?`<div class="chosenTag">✓ In your plan</div>`
+          :priced?`<button class="smallbtn choose" data-act="choose" data-id="${o.id}" data-cat="${c.key}">${pickedId?"Switch to this ↔":"Choose ✓"}</button>`
+          :`<button class="smallbtn" data-act="price" data-id="${o.id}">Work out the cost 🧮</button>`}
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  html+=`<div class="planTracker">📝 Your plan:&nbsp;
+      ${P.cats.map(c=>{
+        const picked=S.planState.chosen[c.key]?findOpt(S.planState.chosen[c.key]):null;
+        return picked?`<span class="ok">${picked.em} ${esc(picked.name)} ✓</span>`:`<span class="todo">${catEmoji[c.key]||"⬜"} still to choose</span>`;
+      }).join(" · ")}
+    </div>
+    <div id="planNotice"></div>
+    <div class="btnRow">
+      <button class="btn bubble big" id="lockPlan">${allChosen?"Plan chosen — build the model! 🧮":"Lock in my plan 🧮"}</button>
+    </div></div>`;
+  $("stage").innerHTML=html;
+  $("lockPlan").addEventListener("click",()=>{
+    const missing=P.cats.filter(c=>!S.planState.chosen[c.key]);
+    if(missing.length===0){buildSlip();return;}
+    $("planNotice").innerHTML=`<div class="notice">⛔ Your plan isn't complete — you still need to choose: <b>${missing.map(c=>c.title.split("(")[0].trim()).join(" · ")}</b></div>`;
+    document.querySelectorAll(".planCat").forEach(el=>{
+      el.classList.toggle("missing",missing.some(c=>c.key===el.dataset.cat));
+    });
+    const first=document.querySelector(".planCat.missing");
+    if(first)first.scrollIntoView({behavior:"smooth",block:"center"});
+  });
+}
+/* delegated planner actions — one listener, survives every re-render */
+function plannerDelegate(e){
+  const b=e.target.closest(".smallbtn[data-act]");
+  if(!b||!S||S.stage!==1||S.bookPhase!=="plan")return;
+  if(b.dataset.act==="price")openPricing(b.dataset.id);
+  else{
+    S.planState.chosen[b.dataset.cat]=b.dataset.id;
+    save();renderPlanner();
+  }
+}
+function openPricing(id){
+  const o=findOpt(id);
+  showQ({
+    q:{topic:o.topic,strand:o.strand,text:o.text,answer:o.price,kind:"num",fmt:o.fmt,hint:o.hint,steps:o.steps,tier:"standard"},
+    tierLabel:"Price it",tierCol:"var(--grape)",
+    canBack:true,persistent:true,
+    stake:"🧮 Find the true cost",
+    onDone(){
+      S.planState.priced[id]=true;
+      save();renderPlanner();
+    }
+  });
+}
+/* ---- the model slip: total, cost per pupil, predicted buzz ---- */
+function chosenOpts(){
+  return dayPlan().cats.map(c=>findOpt(S.planState.chosen[c.key]));
+}
+function buildSlip(){
+  const opts=chosenOpts();
+  const total=opts.reduce((s,o)=>s+o.price,0);
+  const buzz=opts.reduce((s,o)=>s+o.buzz,0);
+  S.slip=[
+    {id:"total",em:"🧮",label:"Grand total of YOUR plan",topic:"7.1.2 Addition (money)",strand:"7.1",
+     text:`Add up your plan: ${opts.map(o=>`${o.name} (${money(o.price)})`).join(" + ")}. What is the GRAND TOTAL in £?`,
+     answer:total,fmt:"Amount in £ (number only)",
+     hint:`Add the three costs one at a time: ${opts.map(o=>money(o.price)).join(" + ")}.`,
+     steps:`${money(opts[0].price)} + ${money(opts[1].price)} = ${money(opts[0].price+opts[1].price)}. Then + ${money(opts[2].price)} = ${money(total)}.`,
+     status:"open",attempts:0},
+    {id:"perPupil",em:"👤",label:"Cost per pupil",topic:"7.2.7 Division",strand:"7.2",
+     text:`Your plan costs ${money(total)} in total. Share that equally between the 30 pupils — what is the cost PER PUPIL in £?`,
+     answer:total/30,fmt:"Amount in £ (number only)",
+     hint:`Work out ${total} ÷ 30. Try dividing by 10 first, then by 3.`,
+     steps:`${total} ÷ 10 = ${total/10}. Then ${total/10} ÷ 3 = ${total/30}.`,
+     status:"open",attempts:0},
+    {id:"buzz",em:"🎉",label:"Predicted buzz of YOUR plan",topic:"7.1.2 Addition",strand:"7.1",
+     text:`Add up the buzz ratings of your three choices: ${opts.map(o=>`${o.name} (+${o.buzz})`).join(", ")}. What buzz do you PREDICT?`,
+     answer:buzz,fmt:"Give a number",
+     hint:`${opts.map(o=>o.buzz).join(" + ")}.`,
+     steps:`${opts[0].buzz} + ${opts[1].buzz} = ${opts[0].buzz+opts[1].buzz}. Then + ${opts[2].buzz} = ${buzz}.`,
+     status:"open",attempts:0}
+  ];
+  S.bookPhase="slip";
+  save();
+  renderSlip();
+}
+function renderSlip(){
+  const opts=chosenOpts();
+  const t=dayPlan().target;
+  const allDone=S.slip.every(r=>r.status==="done");
+  let html=`
+    <div class="card">
+      <div class="eyebrow">🧮 The model · Booking office</div>
+      <h2 style="font-size:24px">Model YOUR plan</h2>
+      <p>Your plan: ${opts.map(o=>`${o.em} <b>${esc(o.name)}</b>`).join(" · ")}. Now work out what it really means — nothing is booked until your model is correct.</p>
+      ${targetBannerHtml()}
+      <div class="sheet">`;
+  S.slip.forEach((r,i)=>{
+    html+=`<div class="wsrow ${r.status==="done"?"done":""} ${r.id==="total"?"total":""}">
+      <div class="info"><h4>${r.em} ${esc(r.label)}</h4><div class="topic">${esc(r.topic)}</div></div>
+      <button class="cell" data-i="${i}" ${r.status==="done"?"disabled":""}>
+        ${r.status==="done"?(r.id==="buzz"?r.answer:money(r.answer)):"tap to work out"}
+      </button>
+    </div>`;
+  });
+  html+=`</div>
+      <div class="btnRow">
+        <button class="btn ghost" id="changePlan" ${allDone?"disabled":""}>← Change my plan</button>
+        <button class="btn bubble big ${allDone?"":"hidden"}" id="submitPlan">Submit the plan & pay 💸</button>
+      </div>
+    </div>`;
+  $("stage").innerHTML=html;
+  document.querySelectorAll(".wsrow .cell:not([disabled])").forEach(b=>{
+    b.addEventListener("click",()=>openSlipCell(Number(b.dataset.i)));
+  });
+  $("changePlan").addEventListener("click",()=>{S.bookPhase="plan";S.slip=[];save();renderPlanner();});
+  const sub=$("submitPlan");
+  if(allDone)sub.addEventListener("click",submitPlan);
+}
+function openSlipCell(i){
+  const r=S.slip[i];
+  if(r.status!=="open")return;
+  showQ({
+    q:{topic:r.topic,strand:r.strand,text:r.text,answer:r.answer,kind:"num",fmt:r.fmt,hint:r.hint,steps:r.steps,tier:"standard"},
+    tierLabel:r.id==="buzz"?"Predict it":"Model it",
+    tierCol:r.id==="total"?"var(--t-ambitious)":"var(--grape)",
+    canBack:true,persistent:true,
+    stake:"📋 Must be correct to book!",
+    attempts:r.attempts,
+    syncAttempts(n){r.attempts=n;},
+    onDone(){r.status="done";save();renderSlip();}
+  });
+}
+function submitPlan(){
+  const t=dayPlan().target;
+  const total=S.slip.find(r=>r.id==="total").answer;
+  const perPupil=S.slip.find(r=>r.id==="perPupil").answer;
+  const predBuzz=S.slip.find(r=>r.id==="buzz").answer;
+  // pay (PTA loan if short)
+  let loan=0;
+  if(total>S.cash){
+    loan=Math.ceil((total-S.cash)/10)*10;
+    S.cash+=loan;S.ptaLoan+=loan;
+    S.buzz=Math.max(0,S.buzz-5);S.buzzToday-=5;
+  }
+  S.cash-=total;S.spentToday+=total;
+  // buzz lands
+  S.buzz+=predBuzz;S.buzzToday+=predBuzz;
+  // Head's challenge
+  const met=perPupil<=t.maxPerPupil&&predBuzz>=t.minBuzz;
+  S.dayTargetMet=met;
+  const lines=[
+    ["🏷️ Plan paid","−"+money(total)],
+    ["👤 Cost per pupil",money(perPupil)+" (target ≤ "+money(t.maxPerPupil)+")"],
+    ["🎉 Buzz from your plan","+"+predBuzz+" (target ≥ "+t.minBuzz+")"]
+  ];
+  if(loan)lines.push(["🆘 PTA emergency loan","+"+money(loan)+" (−5 buzz)"]);
+  if(met){
+    S.targetsMet++;
+    S.cash+=t.bonusCash;S.earnedToday+=t.bonusCash;
+    S.buzz+=t.bonusBuzz;S.buzzToday+=t.bonusBuzz;
+    lines.push(["🎯 Head's challenge MET!","+"+money(t.bonusCash)+" & +"+t.bonusBuzz+" buzz"]);
+  }else{
+    lines.push(["🎯 Head's challenge",perPupil>t.maxPerPupil?"missed — too pricey per pupil":"missed — not enough buzz"]);
+  }
+  hud();flashCash();
+  S.bookPhase="savers";
+  save();
+  renderOutcome({
+    good:met,
+    title:met?"🎯 Challenge met — the Head is delighted!":"Plan booked!",
+    sub:"Booking office",
+    lines,
+    next:renderSavers
+  });
+}
+
+/* ---------------- smart savers (optional stretch) ---------------- */
+function buildSavers(){
+  const defs=[
+    [ {tier:"premium",reward:30,buzz:3,em:"🗣️",title:"Haggle with the coach firm",blurb:"Talk them down with quick maths."},
+      {tier:"ambitious",reward:45,buzz:4,em:"🎟️",title:"Hidden voucher code",blurb:"Crack it for money off the tickets."} ],
+    [ {tier:"premium",reward:40,buzz:3,em:"📞",title:"Call the park's group desk",blurb:"A discount for sharp negotiators."},
+      {tier:"ambitious",reward:60,buzz:4,em:"🧾",title:"Tax-back form wizardry",blurb:"Reclaim VAT like a pro."} ],
+    [ {tier:"premium",reward:50,buzz:3,em:"🚆",title:"Railcard fine print",blurb:"There's a refund hiding in clause 4b."},
+      {tier:"ambitious",reward:75,buzz:5,em:"🏛️",title:"Patron's grant application",blurb:"The museum funds clever classes."} ]
+  ];
+  return defs[S.day-1].map((s,i)=>({...s,id:"sv"+S.day+"_"+i,q:genQ(s.tier),status:"open"}));
+}
+function renderSavers(){
+  let html=`
+    <div class="card">
+      <div class="eyebrow">💡 Optional challenge · Booking office</div>
+      <h2 style="font-size:24px">Smart Savers — money back for the brave</h2>
+      <p>These are <b>genuinely hard</b> one-shot problems. No hints, no retries — but solve one and the money goes straight back into the fund. Skip them freely; there's no penalty for walking away.</p>
+      <div class="saverGrid">`;
+  S.savers.forEach((s,i)=>{
+    const t=TIERS[s.tier];
+    html+=`<div class="saverCard ${s.status==="solved"?"solved":s.status==="missed"?"missed":""}">
+      <span class="tierTag" style="background:${t.col}">${s.tier==="ambitious"?"⭐ MEGA":"TRICKY"}</span>
+      <h4>${s.em} ${esc(s.title)}</h4>
+      <div class="muted">${esc(s.blurb)}</div>
+      <div class="reward">Reward: +${money(s.reward)} & +${s.buzz} buzz</div>
+      <div class="topic muted">${esc(s.q.topic)}</div>
+      ${s.status==="open"?`<button class="btn sun" style="margin-top:8px" data-i="${i}">One shot — go! →</button>`
+        :s.status==="solved"?`<div style="font-weight:800;color:var(--lime-dark);margin-top:8px">✓ Saved ${money(s.reward)}!</div>`
+        :`<div style="font-weight:800;color:var(--coral);margin-top:8px">✗ Chance missed</div>`}
+    </div>`;
+  });
+  html+=`</div>
+      <div class="btnRow"><button class="btn lime big" id="toTrip">All set — it's trip day! 🚌</button></div>
+    </div>`;
+  $("stage").innerHTML=html;
+  document.querySelectorAll(".saverCard .btn").forEach(b=>{
+    b.addEventListener("click",()=>openSaver(Number(b.dataset.i)));
+  });
+  $("toTrip").addEventListener("click",startTrip);
+}
+function openSaver(i){
+  const s=S.savers[i];
+  if(s.status!=="open")return;
+  showQ({
+    q:s.q,canBack:true,oneShot:true,
+    stake:`💸 +${money(s.reward)} on the line`,
+    onAttempt(){if(!s.stretchCounted){s.stretchCounted=true;S.stretchTried++;}},
+    onDone(correct){
+      s.status=correct?"solved":"missed";
+      if(correct){
+        S.stretchSolved++;
+        S.cash+=s.reward;S.earnedToday+=s.reward;
+        S.buzz+=s.buzz;S.buzzToday+=s.buzz;
+        flashCash();
+      }
+      save();
+      renderSavers();
+    }
+  });
+}
+
+/* ================= STAGE 2: trip day ================= */
+function incidentPool(){
+  const d=S.day;
+  const pools=[
+    [ {lucky:false,em:"🐐",title:"Goat raid at the picnic tables!",story:"A gang of pygmy goats is eyeing up the packed lunches. Solve fast to shoo them off — or pay to replace squashed sandwiches!",lose:{cash:40,buzz:4},win:{buzz:3}},
+      {lucky:false,em:"🌧️",title:"Surprise downpour!",story:"The heavens open. Solve to grab the covered picnic barn before another school does — or buy ponchos for everyone.",lose:{cash:45,buzz:3},win:{buzz:2}},
+      {lucky:true,em:"📻",title:"Local radio spots your class!",story:"They'll donate to your trip fund if a pupil can answer their maths teaser live on air. No pressure!",win:{cash:60,buzz:5},lose:{buzz:2}} ],
+    [ {lucky:false,em:"🎢",title:"The Mega-Coaster breaks down!",story:"Your ride slot is about to be wasted. Solve to rebook it — or lose buzz as the queue mutiny begins.",lose:{cash:0,buzz:8},win:{buzz:4}},
+      {lucky:false,em:"🧢",title:"Hat overboard on the log flume!",story:"A pupil's lucky cap (and phone!) are in lost property — there's an admin fee unless you can talk them round with quick maths.",lose:{cash:50,buzz:3},win:{buzz:2}},
+      {lucky:true,em:"🎯",title:"Stallholder's challenge!",story:"The hook-a-duck stallholder offers free goes for the whole class if you can beat his number puzzle.",win:{cash:0,buzz:9},lose:{buzz:1}} ],
+    [ {lucky:false,em:"🚇",title:"Tube line suspended!",story:"You need a new route across London before the workshop starts. Solve to re-plan — or pay for emergency taxis.",lose:{cash:90,buzz:5},win:{buzz:4}},
+      {lucky:false,em:"👟",title:"Headcount panic at the gift shop!",story:"Two pupils have vanished into the rocket aisle. Solve to track them down calmly — or lose serious buzz (and your teacher's trust).",lose:{cash:0,buzz:10},win:{buzz:3}},
+      {lucky:true,em:"🛰️",title:"Astronaut Q&A bonus!",story:"A real astronaut is taking ONE more school group — yours, if you can crack her launch-code puzzle.",win:{buzz:12,cash:0},lose:{buzz:2}} ]
+  ];
+  return shuffle(pools[d-1]).slice(0,2);
+}
+function startTrip(){
+  S.stage=2;stageDots();
+  S.incidents=incidentPool();S.incidentsDone=0;S.legendDone=false;
+  save();
+  renderIncidentIntro();
+}
+function renderIncidentIntro(){
+  if(S.incidentsDone>=S.incidents.length){renderLegendOffer();return;}
+  const inc=S.incidents[S.incidentsDone];
+  $("stage").innerHTML=`
+    <div class="card incident ${inc.lucky?"lucky":""}">
+      <span class="flash">${inc.lucky?"✨ LUCKY BREAK":"🚨 INCIDENT"}</span>
+      <h2 style="font-size:23px">${inc.em} ${esc(inc.title)}</h2>
+      <p>${esc(inc.story)}</p>
+      <p class="muted">${inc.lucky
+        ?`Solve it: ${inc.win.cash?`+${money(inc.win.cash)} and `:""}+${inc.win.buzz} buzz. Miss it: −${inc.lose.buzz} buzz.`
+        :`Solve it: +${inc.win.buzz} buzz. Miss it: ${inc.lose.cash?`−${money(inc.lose.cash)} and `:""}−${inc.lose.buzz} buzz.`}</p>
+      <div class="btnRow"><button class="btn ${inc.lucky?"lime":"bubble"} big" id="deal">Deal with it! →</button></div>
+    </div>`;
+  $("deal").addEventListener("click",()=>{
+    const q=genQ(DAYS[S.day-1].incidentTier);
+    showQ({q,canBack:false,stake:inc.lucky?"✨ Bonus on the line!":"🚨 Damage control!",
+      onDone(correct){
+        const lines=[];
+        if(correct){
+          if(inc.win.cash){S.cash+=inc.win.cash;S.earnedToday+=inc.win.cash;lines.push(["💰 Trip fund","+"+money(inc.win.cash)]);}
+          S.buzz+=inc.win.buzz;S.buzzToday+=inc.win.buzz;
+          lines.push(["🎉 Class buzz","+"+inc.win.buzz]);
+        }else{
+          if(inc.lose.cash){S.cash=Math.max(0,S.cash-inc.lose.cash);S.spentToday+=inc.lose.cash;lines.push(["💰 Trip fund","−"+money(inc.lose.cash)]);}
+          S.buzz=Math.max(0,S.buzz-inc.lose.buzz);S.buzzToday-=inc.lose.buzz;
+          lines.push(["🎉 Class buzz","−"+inc.lose.buzz]);
+        }
+        S.incidentsDone++;hud();flashCash();save();
+        renderOutcome({
+          good:correct,
+          title:correct?(inc.lucky?"✨ Nailed it — bonus claimed!":"😅 Crisis averted!"):(inc.lucky?"Ah well — the chance slips by.":"💸 Ouch — that one cost you."),
+          sub:`${inc.em} ${inc.title}`,
+          lines,
+          next:renderIncidentIntro
+        });
+      }});
+  });
+}
+function renderOutcome({good,title,sub,lines,next}){
+  $("stage").innerHTML=`
+    <div class="card outcome ${good?"good":"bad"}">
+      <div class="muted">${esc(sub)}</div>
+      <div class="verdict">${esc(title)}</div>
+      <div class="lines">
+        ${lines.map(l=>`<div class="row"><span>${l[0]}</span><b>${l[1]}</b></div>`).join("")}
+        <div class="row"><span>💰 Fund now</span><b>${money(S.cash)}</b></div>
+        <div class="row"><span>🎉 Buzz now</span><b>${S.buzz}</b></div>
+      </div>
+      <div class="btnRow"><button class="btn lime big" id="cont">Carry on →</button></div>
+    </div>`;
+  $("cont").addEventListener("click",next);
+}
+function renderLegendOffer(){
+  if(S.legendDone){closeDay();return;}
+  $("stage").innerHTML=`
+    <div class="card" style="max-width:560px;margin:0 auto;text-align:center">
+      <div class="eyebrow">⭐ Optional challenge</div>
+      <h2 style="font-size:24px">Legend Moment</h2>
+      <p>On the way home, your teacher offers one last <b>seriously hard</b> problem. Get it right and the story of Day ${S.day} becomes legend: <b>+8 buzz</b>. One shot. No hints. No penalty for skipping.</p>
+      <div class="btnRow">
+        <button class="btn bubble big" id="legendGo">I'll take it on ⭐</button>
+        <button class="btn" id="legendSkip">Snooze on the way home</button>
+      </div>
+    </div>`;
+  $("legendGo").addEventListener("click",()=>{
+    const q=genQ("ambitious");
+    S.stretchTried++;
+    showQ({q,canBack:false,oneShot:true,stake:"⭐ +8 buzz on the line",
+      onDone(correct){
+        S.legendDone=true;
+        if(correct){S.stretchSolved++;S.buzz+=8;S.buzzToday+=8;}
+        hud();save();
+        renderOutcome({
+          good:correct,
+          title:correct?"⭐ LEGENDARY!":"So close to glory…",
+          sub:"Legend Moment",
+          lines:correct?[["🎉 Class buzz","+8"]]:[["🎉 Class buzz","no change — no penalty"]],
+          next:closeDay
+        });
+      }});
+  });
+  $("legendSkip").addEventListener("click",()=>{S.legendDone=true;save();closeDay();});
+}
+
+/* ================= reports & endings ================= */
+function closeDay(){
+  if(!S.dayClosed){
+    const D=DAYS[S.day-1];
+    S.dayLog.push({earned:S.earnedToday,spent:S.spentToday,buzz:S.buzzToday,em:D.em,name:D.name,
+                   targetMet:S.dayTargetMet,
+                   acc:S.dayQ?Math.round(100*S.dayFirst/S.dayQ):0,q:S.dayQ,first:S.dayFirst});
+    S.dayClosed=true;
+    save();
+  }
+  dayReport();
+}
+function dayReport(){
+  const D=DAYS[S.day-1];
+  const log=S.dayLog[S.dayLog.length-1];
+  const last=S.day===3;
+  const today=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  $("stage").innerHTML=`
+    <div class="card" style="max-width:580px;margin:0 auto 14px">
+      <div id="finalCard">
+        <div style="text-align:center"><span class="stampBig ok">DAY ${S.day} COMPLETE</span></div>
+        <h2 style="text-align:center;font-size:24px;margin-top:10px">${D.em} ${esc(D.name)}</h2>
+        <div class="scorelabel">${esc(S.name)} · ${today}</div>
+        <div class="reportlist">
+          <div class="row"><span>☀️ Raised (jobs, savers & bonuses)</span><b class="plus">+${money(log.earned)}</b></div>
+          <div class="row"><span>🏫 School float</span><b class="plus">+${money(D.float)}</b></div>
+          <div class="row"><span>🏷️ Spent on the trip</span><b class="minus">−${money(log.spent)}</b></div>
+          <div class="row"><span>🎯 Head's challenge</span><b>${log.targetMet?"MET ✓":"missed ✗"}</b></div>
+          <div class="row"><span>🎯 First-try accuracy today</span><b>${log.acc}% (${log.first}/${log.q})</b></div>
+          <div class="row"><span>🎉 Buzz earned today</span><b>${log.buzz>=0?"+":""}${log.buzz}</b></div>
+          <div class="row"><span>💰 In the fund tonight</span><b>${money(S.cash)}</b></div>
+        </div>
+        <p class="muted" style="text-align:center;margin-top:10px">📸 Screenshot this report before moving on!</p>
+      </div>
+      <div class="btnRow">
+        <button class="btn lime big" id="nextDay">${last?"See your ERA Week report 🏆":`Start Day ${S.day+1} ${DAYS[S.day].em} →`}</button>
+      </div>
+    </div>`;
+  $("nextDay").addEventListener("click",()=>{
+    if(last){finalReport();return;}
+    S.day++;S.stage=0;S.dayClosed=false;S.dayTargetMet=false;
+    S.earnedToday=0;S.spentToday=0;S.buzzToday=0;S.dayQ=0;S.dayFirst=0;
+    dayBanner();hud();buildOrders();save();renderCashBuilder();
+  });
+}
+/* ---- 7 endings ---- */
+const ENDINGS=[
+  {id:"perfect",em:"🏆",name:"The Perfect Planner",
+   test:s=>s.targetsMet===3&&s.acc>=85&&s.buzz>=85&&s.bank>=1000,
+   flavour:"Three Head's challenges met, a happy class, a healthy bank and barely a slip of the pen. Frame this one.",
+   how:"Meet all 3 Head's challenges with 85%+ accuracy, 85+ buzz and £1,000+ banked."},
+  {id:"tycoon",em:"💰",name:"The Trip Tycoon",
+   test:s=>s.bank>=2500,
+   flavour:"You squeezed every penny until it squeaked. The trip fund has never looked healthier.",
+   how:"Finish with £2,500 or more in the bank."},
+  {id:"crowd",em:"🎉",name:"The Crowd-Pleaser",
+   test:s=>s.buzz>=95,
+   flavour:"Pupils are already begging to do ERA Week again. You spent where it mattered: on joy.",
+   how:"Finish with 95+ class buzz."},
+  {id:"mathemagician",em:"🧠",name:"The Mathemagician",
+   test:s=>s.acc>=90&&s.totalQ>=20,
+   flavour:"First try, every time (well, nearly). Calculators fear you.",
+   how:"Finish with 90%+ first-try accuracy."},
+  {id:"daredevil",em:"⭐",name:"The Daredevil",
+   test:s=>s.stretchTried>=9&&s.stretchSolved>=6,
+   flavour:"Mega jobs, one-shot savers, legend moments — you hunted every hard problem on offer and beat most of them.",
+   how:"Attempt 9+ of the optional ⭐ challenges and solve 6+."},
+  {id:"survivor",em:"🆘",name:"The Great Survivor",
+   test:s=>s.ptaLoan>0,
+   flavour:"The PTA had to bail you out — but you got every pupil there and back, and that counts for plenty.",
+   how:"Need a PTA emergency loan… but still finish the week."},
+  {id:"steady",em:"📋",name:"The Steady Hand",
+   test:()=>true,
+   flavour:"Three trips planned, booked and survived. A solid week's work for any trip accountant.",
+   how:"Complete an ERA Week."}
+];
+function pickEnding(stats){
+  for(const e of ENDINGS)if(e.test(stats))return e;
+  return ENDINGS[ENDINGS.length-1];
+}
+function finalReport(){
+  const acc=S.totalQ?Math.round(100*S.firstTry/S.totalQ):0;
+  const buzzScore=Math.min(100,S.buzz);
+  const bankScore=Math.min(100,Math.round(100*S.cash/2000));
+  const overall=Math.round(0.4*buzzScore+0.35*acc+0.25*bankScore);
+  const stars=overall<30?1:overall<50?2:overall<68?3:overall<84?4:5;
+  const approved=stars>=3;
+  const ending=pickEnding({targetsMet:S.targetsMet,acc,buzz:S.buzz,bank:S.cash,totalQ:S.totalQ,
+                           stretchTried:S.stretchTried,stretchSolved:S.stretchSolved,ptaLoan:S.ptaLoan});
+  REC.endings=REC.endings||[];
+  const newEnding=!REC.endings.includes(ending.id);
+  if(newEnding)REC.endings.push(ending.id);
+  const isRecord=overall>REC.bestScore;
+  REC.bestScore=Math.max(REC.bestScore,overall);
+  REC.bestBank=Math.max(REC.bestBank,S.cash);
+  REC.weeks++;Store.set(REC_KEY,REC);
+  clearSave();
+  const today=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  const strandRows=Object.keys(STRANDS).filter(k=>S.stats[k].a>0).map(k=>{
+    const st=S.stats[k],p=Math.round(100*st.c/st.a);
+    return`<div class="accrow"><span>${STRANDS[k]}</span><div class="accbar"><i style="width:${p}%"></i></div><span>${p}%</span></div>`;
+  }).join("");
+  const gallery=ENDINGS.map(e=>REC.endings.includes(e.id)
+    ?`<div class="endSlot" title="${esc(e.name)}">${e.em}</div>`
+    :`<div class="endSlot locked">?</div>`).join("");
+  $("dayBanner").classList.add("hidden");
+  $("stage").innerHTML=`
+    <div class="card" style="max-width:620px;margin:0 auto">
+      <div id="finalCard">
+        <div style="text-align:center"><span class="stampBig ${approved?"ok":"no"}">${approved?"LEGENDARY ERA WEEK":"NEEDS A RETHINK"}</span></div>
+        <h2 style="text-align:center;font-size:26px;margin-top:10px">🎒 ERA Week Trip Report</h2>
+        <div class="scorelabel">${esc(S.name)} · ${today}</div>
+        <div class="stars">${"★".repeat(stars)}${"☆".repeat(5-stars)}</div>
+        <div class="bigscore">${overall}</div>
+        <div class="scorelabel">Tycoon score</div>
+        <div class="endingCard">
+          <span class="em">${ending.em}</span>
+          <h3>Your ending: ${esc(ending.name)} ${newEnding?"· NEW! 🎊":""}</h3>
+          <div class="flavour">${esc(ending.flavour)}</div>
+          <div class="unlockHint">There are 7 endings to discover — play differently to find the rest!</div>
+          <div class="endGallery">${gallery}</div>
+          <div class="unlockHint">Endings found on this device: ${REC.endings.length}/7</div>
+        </div>
+        <div class="dayPills">
+          ${S.dayLog.map((d,i)=>`<div class="dayPill"><span class="em">${d.em}</span>Day ${i+1}<br>raised ${money(d.earned)}<br>buzz ${d.buzz>=0?"+":""}${d.buzz}<br>🎯 ${d.targetMet?"met":"missed"}</div>`).join("")}
+        </div>
+        <div class="reportlist">
+          <div class="row"><span>🎯 Head's challenges met</span><b>${S.targetsMet}/3</b></div>
+          <div class="row"><span>🎉 Total class buzz</span><b>${S.buzz}</b></div>
+          <div class="row"><span>🎯 First-try accuracy</span><b>${acc}% (${S.firstTry}/${S.totalQ})</b></div>
+          <div class="row"><span>💰 Final bank</span><b>${money(S.cash)}</b></div>
+          <div class="row"><span>⭐ Optional challenges</span><b>${S.stretchSolved} solved of ${S.stretchTried} tried</b></div>
+          ${S.ptaLoan?`<div class="row"><span>🆘 PTA loans needed</span><b class="minus">${money(S.ptaLoan)}</b></div>`:""}
+          <div class="row"><span>⚡ Best streak</span><b>${S.bestStreak}</b></div>
+        </div>
+        <h3 style="margin-top:12px;font-size:17px">📚 Your maths this week</h3>
+        ${strandRows||"<p class='muted'>No questions answered!</p>"}
+        <p class="muted" style="text-align:center;margin-top:10px">📸 Screenshot this report to show your teacher!</p>
+        <p style="text-align:center;font-weight:800;margin:6px 0">${isRecord?"🏆 NEW personal best on this device!":`Personal best on this device: ${REC.bestScore}`}</p>
+      </div>
+      <div class="btnRow"><button class="btn lime big" id="again">Chase another ending 🔁</button></div>
+    </div>`;
+  $("again").addEventListener("click",()=>startGame(S.name));
+}
+
+/* ================= flow & start ================= */
+function startGame(name){
+  S=newGame(name);
+  hud();dayBanner();buildOrders();save();renderCashBuilder();
+}
+function resumeGame(saved){
+  S=saved;
+  // older saves may predate some fields
+  S.planState=S.planState||{priced:{},chosen:{}};
+  S.stretchTried=S.stretchTried||0;S.stretchSolved=S.stretchSolved||0;
+  S.targetsMet=S.targetsMet||0;
+  hud();dayBanner();
+  if(S.stage===0){renderCashBuilder();return;}
+  if(S.stage===1){
+    if(S.bookPhase==="savers")renderSavers();
+    else if(S.bookPhase==="slip"&&S.slip&&S.slip.length)renderSlip();
+    else renderPlanner();
+    return;
+  }
+  if(S.dayClosed){dayReport();return;}
+  if(S.incidentsDone>=(S.incidents||[]).length){renderLegendOffer();return;}
+  renderIncidentIntro();
+}
+function startScreen(){
+  $("dayBanner").classList.add("hidden");
+  const saved=Store.get(SAVE_KEY);
+  const canResume=saved&&saved.day;
+  REC.endings=REC.endings||[];
+  $("stage").innerHTML=`
+    <div class="card" style="max-width:640px;margin:14px auto">
+      <h2 style="font-size:26px;text-align:center">🎒 Welcome to ERA Week!</h2>
+      <p style="text-align:center">Three school trips. Three days. One trip fund — and <b>you're</b> the accountant.</p>
+<p style="text-align:center">Oh, and maybe keep an eye on the weather forecast too? 😉</p>
+      ${canResume?`<div class="resumeCard"><b>📌 Saved game found:</b> ${esc(saved.name)} — Day ${saved.day}, ${["cash builder","booking office","trip day"][saved.stage]||"in progress"}.
+        <div class="btnRow" style="justify-content:flex-start"><button class="btn sun" id="resume">Resume game →</button></div></div>`:""}
+      <div class="tripStrip">
+        ${DAYS.map((d,i)=>`<div class="tripCard"><span class="em">${d.em}</span><h3>Day ${i+1}</h3><div class="muted">${esc(d.name)}</div><div class="diff">${"🔥".repeat(i+1)} ${["Warm-up","Trickier","Toughest"][i]}</div></div>`).join("")}
+      </div>
+      <ul class="rules">
+        <li>☀️ <b>Cash builder:</b> solve fundraiser jobs to raise money. Harder jobs pay more, the ⭐ Mega job pays double, and 3 first-try corrects in a row = +50% pay ⚡</li>
+        <li>🏷️ <b>Planning desk:</b> design YOUR OWN trip. Work out what each option really costs, choose, then model the consequences — total, cost per pupil, predicted buzz. Hit the 🎯 Head's challenge for a bonus!</li>
+        <li>🚌 <b>Trip day:</b> incidents strike! Solve fast to dodge disasters, grab bonuses — and chase the ⭐ Legend Moment.</li>
+        <li>🏁 <b>7 secret endings.</b> Tycoon? Crowd-Pleaser? Daredevil? How you play decides how your story ends — collect them all!</li>
+        <li>💾 Your game saves automatically on this device — close it and resume later.</li>
+      </ul>
+      <p style="margin-top:12px"><b>Your name</b> (it goes on your Trip Reports):</p>
+      <input class="nameBox" id="pname" maxlength="24" placeholder="e.g. Alex P" autocomplete="off">
+      ${REC.bestScore?`<div class="bestBanner">🏆 Best score on this device: <b>${REC.bestScore}</b> · streak ⚡${REC.longestStreak} · endings ${REC.endings.length}/7</div>`:""}
+      <div class="btnRow"><button class="btn bubble big" id="start">Start a new ERA Week ${DAYS[0].em} →</button></div>
+    </div>`;
+  if(canResume)$("resume").addEventListener("click",()=>resumeGame(saved));
+  $("start").addEventListener("click",()=>startGame($("pname").value.trim()||"Trip Tycoon"));
+}
+
+/* ================= boot ================= */
+buildKeypad();
+$("qBackBtn").addEventListener("click",closeQ);
+$("stage").addEventListener("click",plannerDelegate);
+startScreen();
+
+</script>
+</body>
+</html>
