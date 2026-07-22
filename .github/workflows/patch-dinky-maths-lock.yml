@@ -1,3 +1,4 @@
+# One-off branch patch; removes itself after applying the game change.
 name: Patch Dinky Doink maths question lock
 
 on:
