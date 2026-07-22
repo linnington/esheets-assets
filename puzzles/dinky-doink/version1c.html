@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +14,7 @@
 
   gtag('config', 'G-LM261TLP6C');
 </script>
-<!--add within head of page-->
+<!--maths lock has been implemented-->
   <style>
 
     :root {
@@ -2704,6 +2705,10 @@
 
     function addPart(type) {
       if (state.running || state.replaying) return;
+      if (state.currentQuestion) {
+        revealMathsQuestion();
+        return;
+      }
       const current = countType(type);
       const maximum = maximumAllowance(type);
       if (current >= maximum) return;
@@ -2826,6 +2831,7 @@
 
     function updatePartButtons() {
       const atTotalLimit = state.parts.length >= totalPartLimit();
+      const questionOpen = Boolean(state.currentQuestion);
       addButtons.forEach(button => {
         const type = button.dataset.add;
         const current = countType(type);
@@ -2838,7 +2844,7 @@
 
         if (state.challenge.playground) {
           small.textContent = `${current} placed · free play`;
-          button.disabled = state.running || state.replaying || current >= maximum;
+          button.disabled = state.running || state.replaying || questionOpen || current >= maximum;
           return;
         }
 
@@ -2857,7 +2863,7 @@
           small.textContent = `${current} placed · no more available · cost ${PART_COSTS[type]}`;
         }
 
-        button.disabled = state.running || state.replaying || atTotalLimit || current >= maximum;
+        button.disabled = state.running || state.replaying || questionOpen || atTotalLimit || current >= maximum;
       });
     }
 
@@ -2888,12 +2894,13 @@
       selectedText.textContent = selected ? PART_NAMES[selected.type] : "nothing";
       const rotatable = selected && PART_DEFINITIONS[selected.type]?.rotatable;
       const locked = state.running || state.replaying;
+      const questionOpen = Boolean(state.currentQuestion);
 
       rotateLeftButton.disabled = locked || !rotatable;
       rotateRightButton.disabled = locked || !rotatable;
       deleteButton.disabled = locked || !selected;
-      runButton.disabled = locked;
-      replayButton.disabled = locked || state.replayFrames.length < 2;
+      runButton.disabled = locked || questionOpen;
+      replayButton.disabled = locked || questionOpen || state.replayFrames.length < 2;
       stopButton.disabled = !locked;
       resetButton.disabled = locked;
       checkButton.disabled = locked;
@@ -2906,6 +2913,10 @@
 
     function startMachine() {
       if (state.running || state.replaying) return;
+      if (state.currentQuestion) {
+        revealMathsQuestion();
+        return;
+      }
       closeCompletionOverlay();
       closeMathsQuestion();
       resetRuntimeParts();
@@ -3084,6 +3095,10 @@
 
     function startReplay(options = {}) {
       if (state.running || state.replaying || state.replayFrames.length < 2) return;
+      if (state.currentQuestion) {
+        revealMathsQuestion();
+        return;
+      }
       state.replayReturnsToCompletion = options.returnToCompletion === true;
       closeMathsQuestion();
       resetRuntimeParts();
@@ -3277,6 +3292,10 @@
 
     function openMathsQuestion(requestedPartType = null) {
       if (state.running || state.replaying) return;
+      if (state.currentQuestion) {
+        revealMathsQuestion();
+        return;
+      }
       state.pendingPartType = requestedPartType;
       state.currentQuestion = makeMathsQuestion();
       const prompt = state.currentQuestion && typeof state.currentQuestion.text === "string"
@@ -3291,6 +3310,7 @@
       mathsFeedback.dataset.kind = "";
       questionPanel.dataset.open = "true";
       mathsCard.dataset.questionOpen = "true";
+      updateControls();
       revealMathsQuestion();
     }
 
@@ -3349,6 +3369,7 @@
         window.setTimeout(() => {
           closeMathsQuestion();
           addPart(requestedPartType);
+          updateControls();
           returnControlPanelToTop();
         }, 650);
       } else {
