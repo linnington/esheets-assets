@@ -1235,6 +1235,7 @@
     var PORTAL_SUBMISSION_URL = 'https://portal.esheets.io/api/submissions';
     var SNAPSHOT_FORMAT_VERSION = 1;
     var CLIENT_SNAPSHOT_LIMIT = 440 * 1024;
+    var CLIENT_REQUEST_LIMIT = 900 * 1024;
     var TRACKING_CODE_REGEX = /^[A-HJ-NP-Z2-9]{5}$/;
     var answerItemsProvider = null;
     var cachedStyleMarkup = null;
@@ -1530,7 +1531,7 @@
                 return nextBrowserTurn();
             })
             .then(function () {
-                if (typeof answerItemsProvider !== 'function') return;
+                if (!payload.student_snapshot_html || typeof answerItemsProvider !== 'function') return;
                 try {
                     var answers = createSnapshot(document, 'answers');
                     if (answers.byteLength <= CLIENT_SNAPSHOT_LIMIT) {
@@ -1546,10 +1547,26 @@
                 console.warn('ESHEETS: snapshot preparation failed; submitting the score without snapshots.', error);
             })
             .then(function () {
-                if (payload.student_snapshot_html || payload.answer_snapshot_html) {
+                if (payload.student_snapshot_html) {
                     payload.snapshot_format_version = SNAPSHOT_FORMAT_VERSION;
+                } else {
+                    delete payload.answer_snapshot_html;
+                    delete payload.snapshot_format_version;
                 }
-                amended.body = JSON.stringify(payload);
+
+                var body = JSON.stringify(payload);
+                if (new Blob([body]).size > CLIENT_REQUEST_LIMIT && payload.answer_snapshot_html) {
+                    delete payload.answer_snapshot_html;
+                    body = JSON.stringify(payload);
+                }
+                if (new Blob([body]).size > CLIENT_REQUEST_LIMIT && payload.student_snapshot_html) {
+                    delete payload.student_snapshot_html;
+                    delete payload.snapshot_format_version;
+                    body = JSON.stringify(payload);
+                    console.warn('ESHEETS: combined snapshot request exceeded the client size limit; submitting the score only.');
+                }
+
+                amended.body = body;
                 return originalFetch(input, amended);
             });
     }
@@ -1583,6 +1600,20 @@
         };
     }
 
+    function trackedLaunchVisible() {
+        if (document.querySelector('.es-student-warning')) return true;
+
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var classCode = params.get('class') || params.get('class_code') || params.get('classcode') || '';
+            var taskCode = params.get('task') || params.get('task_code') || params.get('taskcode') || '';
+            return TRACKING_CODE_REGEX.test(String(classCode).trim().toUpperCase()) &&
+                TRACKING_CODE_REGEX.test(String(taskCode).trim().toUpperCase());
+        } catch (error) {
+            return false;
+        }
+    }
+
     function revealLockoutVisible() {
         return Array.prototype.slice.call(document.querySelectorAll('.es-lockout-message')).some(function (message) {
             return window.getComputedStyle(message).display !== 'none';
@@ -1593,7 +1624,7 @@
     if (typeof originalMountSubmissionBar === 'function') {
         window.ESHEETS.mountSubmissionBar = function () {
             var result = originalMountSubmissionBar.apply(this, arguments);
-            if (!result || !result.recordBtn) return result;
+            if (!result || !result.recordBtn || !trackedLaunchVisible()) return result;
 
             var button = result.recordBtn;
             var originalUpdateState = result.updateState;
