@@ -1542,15 +1542,13 @@
                     console.warn('ESHEETS: answer snapshot capture failed', error);
                 }
             })
+            .catch(function (error) {
+                console.warn('ESHEETS: snapshot preparation failed; submitting the score without snapshots.', error);
+            })
             .then(function () {
                 if (payload.student_snapshot_html || payload.answer_snapshot_html) {
                     payload.snapshot_format_version = SNAPSHOT_FORMAT_VERSION;
                 }
-                amended.body = JSON.stringify(payload);
-                return originalFetch(input, amended);
-            })
-            .catch(function (error) {
-                console.warn('ESHEETS: snapshot preparation failed; submitting the score without snapshots.', error);
                 amended.body = JSON.stringify(payload);
                 return originalFetch(input, amended);
             });
