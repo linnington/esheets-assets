@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - agent/lock-dinky-doink-maths-question
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
