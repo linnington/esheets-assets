@@ -1,0 +1,140 @@
+name: Patch Dinky Doink maths question lock
+
+on:
+  push:
+    branches:
+      - agent/lock-dinky-doink-maths-question
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/lock-dinky-doink-maths-question
+          fetch-depth: 0
+
+      - name: Lock active maths question
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('puzzles/dinky-doink/version1c.html')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  '''    function openMathsQuestion(requestedPartType = null) {
+      if (state.running || state.replaying) return;
+      state.pendingPartType = requestedPartType;
+      state.currentQuestion = makeMathsQuestion();''',
+                  '''    function openMathsQuestion(requestedPartType = null) {
+      if (state.running || state.replaying) return;
+      if (state.currentQuestion) {
+        const requestedPart = state.pendingPartType
+          ? PART_NAMES[state.pendingPartType].toLowerCase()
+          : "part";
+        setStatus(
+          "Finish the current question",
+          `Answer the question already shown to unlock the ${requestedPart}.`,
+          "warning"
+        );
+        revealMathsQuestion();
+        return;
+      }
+      state.pendingPartType = requestedPartType;
+      state.currentQuestion = makeMathsQuestion();'''
+              ),
+              (
+                  '''      questionPanel.dataset.open = "true";
+      mathsCard.dataset.questionOpen = "true";
+      revealMathsQuestion();''',
+                  '''      questionPanel.dataset.open = "true";
+      mathsCard.dataset.questionOpen = "true";
+      updateControls();
+      revealMathsQuestion();'''
+              ),
+              (
+                  '''        window.setTimeout(() => {
+          closeMathsQuestion();
+          addPart(requestedPartType);
+          returnControlPanelToTop();
+        }, 650);''',
+                  '''        window.setTimeout(() => {
+          closeMathsQuestion();
+          addPart(requestedPartType);
+          updateControls();
+          returnControlPanelToTop();
+        }, 650);'''
+              ),
+              (
+                  '''    function updatePartButtons() {
+      const atTotalLimit = state.parts.length >= totalPartLimit();''',
+                  '''    function updatePartButtons() {
+      const atTotalLimit = state.parts.length >= totalPartLimit();
+      const questionOpen = Boolean(state.currentQuestion);'''
+              ),
+              (
+                  '''          button.disabled = state.running || state.replaying || current >= maximum;''',
+                  '''          button.disabled = state.running || state.replaying || questionOpen || current >= maximum;'''
+              ),
+              (
+                  '''        button.disabled = state.running || state.replaying || atTotalLimit || current >= maximum;''',
+                  '''        button.disabled = state.running || state.replaying || questionOpen || atTotalLimit || current >= maximum;'''
+              ),
+              (
+                  '''      const rotatable = selected && PART_DEFINITIONS[selected.type]?.rotatable;
+      const locked = state.running || state.replaying;
+
+      rotateLeftButton.disabled = locked || !rotatable;''',
+                  '''      const rotatable = selected && PART_DEFINITIONS[selected.type]?.rotatable;
+      const locked = state.running || state.replaying;
+      const questionOpen = Boolean(state.currentQuestion);
+
+      rotateLeftButton.disabled = locked || !rotatable;'''
+              ),
+              (
+                  '''      runButton.disabled = locked;
+      replayButton.disabled = locked || state.replayFrames.length < 2;''',
+                  '''      runButton.disabled = locked || questionOpen;
+      replayButton.disabled = locked || questionOpen || state.replayFrames.length < 2;'''
+              )
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected one exact match, found {count}: {old.splitlines()[0]}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+
+          workflow = Path('.github/workflows/patch-dinky-maths-lock.yml')
+          workflow.unlink()
+          PY
+
+      - name: Check embedded game script syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          text = Path('puzzles/dinky-doink/version1c.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', text, flags=re.S | re.I)
+          inline = [script for script in scripts if script.strip()]
+          if not inline:
+              raise SystemExit('No inline script found')
+          Path('/tmp/dinky-doink-inline.js').write_text(inline[-1], encoding='utf-8')
+          PY
+          node --check /tmp/dinky-doink-inline.js
+
+      - name: Commit patched game
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add puzzles/dinky-doink/version1c.html .github/workflows/patch-dinky-maths-lock.yml
+          git commit -m "Lock Dinky Doink maths questions until answered"
+          git push origin HEAD:agent/lock-dinky-doink-maths-question
