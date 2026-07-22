@@ -1,0 +1,1657 @@
+/* CANONICAL v5.1 — Full Framework (Scoped: .esheets-worksheet) */
+
+/**
+ * ESHEETS v5.1 Framework Core
+ *
+ * Scoped, safe, and feature-rich.
+ *
+ * Usage:
+ *   ESHEETS.init({ worksheet_id: 'unique_id', meta: {} });
+ *   ESHEETS.setScore(score, maxScore); 
+ *   ESHEETS.lockCorrectAnswer(input, button);
+ *   ESHEETS.mountSubmissionBar({ ... });
+ *   ESHEETS.mountIdentityBar({ ... });
+ *   ESHEETS.setTrackingAdapter(fn);
+ */
+(function () {
+    'use strict';
+
+    var STORAGE_KEY = 'esheets:v5:progress';
+    var LEGACY_KEY = 'esheets:v1:progress';
+    var IDENTITY_KEY = 'esheets:v5:identity';
+    var BROWSER_CODE_KEY = 'esheets_browser_device_code';
+
+    function getBrowserDeviceCode() {
+        try {
+            var code = localStorage.getItem(BROWSER_CODE_KEY);
+            if (!code || !/^[A-HJ-NP-Z2-9]{5}$/.test(code)) {
+                var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                code = '';
+                for (var i = 0; i < 5; i++) {
+                    code += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                localStorage.setItem(BROWSER_CODE_KEY, code);
+            }
+            return code;
+        } catch (e) {
+            return '';
+        }
+    }
+
+    var meta = {};
+    var worksheetMeta = {};
+    var isMounted = false;
+    var trackingAdapter = null;
+    var lockoutActive = false;
+    var lockoutUIHandler = function () { };
+    var hideBadgeUntilNextSubmit = false;
+
+    var launchTracking = {
+        class_code: "",
+        task_code: "",
+        active: false
+    };
+
+    // --- Internal Helpers ---
+
+    function getStorage() {
+        try {
+            var raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) return JSON.parse(raw);
+
+            var legacy = localStorage.getItem(LEGACY_KEY);
+            if (legacy) {
+                try {
+                    return JSON.parse(legacy);
+                } catch (e) {
+                    return {};
+                }
+            }
+            return {};
+        } catch (e) {
+            console.warn('ESHEETS: storage read error', e);
+            return {};
+        }
+    }
+
+    function setStorage(data) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (e) {
+            console.error('ESHEETS: storage write error', e);
+        }
+    }
+
+    function getIdentityStorage() {
+        try {
+            var raw = localStorage.getItem(IDENTITY_KEY);
+            var data = raw ? JSON.parse(raw) : {};
+
+            var identity = {
+                first_name: data.first_name || "",
+                last_name: data.last_name || ""
+            };
+
+            if (data.student_name) {
+                var parts = data.student_name.trim().split(/\s+/);
+                if (parts.length > 0) {
+                    if (!identity.first_name) identity.first_name = parts[0];
+                    if (!identity.last_name) identity.last_name = parts.slice(1).join(' ');
+                }
+            }
+
+            return identity;
+        } catch (e) {
+            return { first_name: "", last_name: "", class_code: "" };
+        }
+    }
+
+    function setIdentityStorage(data) {
+        try {
+            localStorage.setItem(IDENTITY_KEY, JSON.stringify(data));
+        } catch (e) {
+            console.error('ESHEETS: identity write error', e);
+        }
+    }
+
+    function getRecord(id) {
+        if (!id) return null;
+        var data = getStorage();
+        return data[id] || null;
+    }
+
+    function saveRecord(id, updates) {
+        if (!id) return;
+        var data = getStorage();
+        var record = data[id] || {
+            bestScore: 0,
+            maxScore: 0,
+            bestPercent: 0,
+            lastScore: 0,
+            lastPercent: 0,
+            submittedAt: null
+        };
+
+        for (var key in updates) {
+            if (Object.prototype.hasOwnProperty.call(updates, key)) {
+                record[key] = updates[key];
+            }
+        }
+
+        data[id] = record;
+        setStorage(data);
+        return record;
+    }
+
+    function isInScope(el) {
+        return el && el.closest('.esheets-worksheet');
+    }
+
+    function updatePlaceholders(text) {
+        var roots = document.querySelectorAll('.esheets-worksheet');
+        if (roots.length === 0) return;
+
+        var selectors = [
+            '[data-esheets-score="top"]',
+            '[data-esheets-score="bottom"]'
+        ];
+
+        for (var r = 0; r < roots.length; r++) {
+            var root = roots[r];
+            selectors.forEach(function (sel) {
+                var els = root.querySelectorAll(sel);
+                for (var i = 0; i < els.length; i++) {
+                    if (els[i].textContent !== text) {
+                        els[i].textContent = text;
+                    }
+                    if (!els[i].classList.contains('esheets-scorebar')) {
+                        els[i].classList.add('esheets-scorebar');
+                    }
+                }
+            });
+        }
+    }
+
+    function formatPct(p) {
+        var rounded = Math.round(p * 10) / 10;
+        return Number.isInteger(rounded) ? rounded : rounded.toFixed(1);
+    }
+
+    function formatScore(s, m, p) {
+        return s + ' / ' + m + ' (' + formatPct(p) + '%)';
+    }
+
+    function getCreatureBadge(percent) {
+        var p = percent;
+        var bands = [
+            { min: 100, msg: "Perfect score — outstanding work!", badges: [{n:'Legendary Lion', e:'🦁'}, {n:'Perfect Panda', e:'🐼'}, {n:'Champion Cheetah', e:'🐆'}] },
+            { min: 90, msg: "Excellent work — that’s a score worth celebrating.", badges: [{n:'Towering Tiger', e:'🐅'}, {n:'Majestic Eagle', e:'🦅'}, {n:'Mighty Mammoth', e:'🦣'}] },
+            { min: 80, msg: "Excellent work — that’s a score worth celebrating.", badges: [{n:'Brilliant Bear', e:'🐻'}, {n:'Powerful Panther', e:'🐆'}, {n:'Excellent Elephant', e:'🐘'}] },
+            { min: 70, msg: "Great effort — keep building your confidence.", badges: [{n:'Clever Crocodile', e:'🐊'}, {n:'Dazzling Dolphin', e:'🐬'}] },
+            { min: 60, msg: "Great effort — keep building your confidence.", badges: [{n:'Practising Parrot', e:'🦜'}, {n:'Steady Squirrel', e:'🐿️'}, {n:'Curious Crab', e:'🦀'}] },
+            { min: 50, msg: "Good practice — correct a few more answers and record again to upgrade your badge.", badges: [{n:'Growing Gecko', e:'🦎'}, {n:'Helpful Hedgehog', e:'🦔'}, {n:'Climbing Koala', e:'🐨'}] },
+            { min: 40, msg: "Good practice — correct a few more answers and record again to upgrade your badge.", badges: [{n:'Busy Beetle', e:'🪲'}, {n:'Determined Duck', e:'🦆'}, {n:'Resilient Rabbit', e:'🐇'}] },
+            { min: 30, msg: "Keep going — every correction helps you improve.", badges: [{n:'Determined Ant', e:'🐜'}, {n:'Tenacious Turtle', e:'🐢'}, {n:'Patient Penguin', e:'🐧'}] },
+            { min: 20, msg: "Keep going — every correction helps you improve.", badges: [{n:'Steady Snail', e:'🐌'}, {n:'Brave Beginner', e:'🐣'}, {n:'Curious Caterpillar', e:'🐛'}] },
+            { min: 0, msg: "Keep going — every correction helps you improve.", badges: [{n:'Brave Beginner', e:'🐣'}, {n:'Determined Ant', e:'🐜'}, {n:'Keep-Going Koala', e:'🐨'}] }
+        ];
+
+        var match = bands[bands.length - 1]; // fallback to lowest
+        for (var i = 0; i < bands.length; i++) {
+            if (p >= bands[i].min) {
+                match = bands[i];
+                break;
+            }
+        }
+        var randomBadge = match.badges[Math.floor(Math.random() * match.badges.length)];
+        return { name: randomBadge.n, emoji: randomBadge.e, msg: match.msg };
+    }
+
+    var TRACKING_CODE_REGEX = /^[A-HJ-NP-Z2-9]{5}$/;
+
+    function normalizeTrackingCode(str) {
+        if (typeof str !== 'string') return "";
+        return str.trim().toUpperCase().replace(/\s+/g, '');
+    }
+
+    function isValidTrackingCode(str) {
+        return TRACKING_CODE_REGEX.test(str);
+    }
+
+    function renderTopicGuideJumpLink() {
+        if (document.getElementById('es-topic-guide-jump')) return;
+
+        var topicGuideMarker = document.querySelector('[data-es-topic-guide="v1"]') || document.getElementById('topic-guide');
+        
+        if (!topicGuideMarker) {
+            if (!renderTopicGuideJumpLink.hasRetried) {
+                renderTopicGuideJumpLink.hasRetried = true;
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', renderTopicGuideJumpLink, { once: true });
+                } else {
+                    requestAnimationFrame(renderTopicGuideJumpLink);
+                }
+            }
+            return;
+        }
+
+        var topScoreBar = document.querySelector('[data-esheets-score="top"]');
+        if (!topScoreBar || !topScoreBar.parentNode) return;
+
+        var jumpDiv = document.createElement('div');
+        jumpDiv.className = 'es-topic-guide-jump';
+        jumpDiv.id = 'es-topic-guide-jump';
+        jumpDiv.setAttribute('data-es-topic-guide-jump', 'v1');
+
+        var link = document.createElement('a');
+        link.href = '#topic-guide';
+        link.textContent = 'Need help first? Jump to the Topic guide →';
+
+        jumpDiv.appendChild(link);
+        topScoreBar.parentNode.insertBefore(jumpDiv, topScoreBar);
+    }
+
+    function renderTeacherSignupCta() {
+        if (document.getElementById('es-teacher-signup-cta')) return;
+        if (launchTracking.active) return; // Hide when tracking is active
+
+        var topScoreBar = document.querySelector('[data-esheets-score="top"]');
+        var subBar = document.querySelector('.esheets-submission-bar');
+        
+        var targetEl = topScoreBar || subBar;
+        if (!targetEl || !targetEl.parentNode) return;
+
+        var cta = document.createElement('div');
+        cta.id = 'es-teacher-signup-cta';
+        cta.className = 'es-teacher-signup-cta';
+        
+        var textNode = document.createTextNode('Tutor or teacher? ');
+        
+        var link = document.createElement('a');
+        link.href = 'https://www.esheets.io/pricing/';
+        link.textContent = 'Set this as self-marking homework →';
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        
+        cta.appendChild(textNode);
+        cta.appendChild(link);
+        
+        targetEl.parentNode.insertBefore(cta, targetEl);
+    }
+
+    window.ESHEETS = window.ESHEETS || {};
+
+    Object.assign(window.ESHEETS, {
+
+        init: function (options) {
+            if (!document.querySelector('.esheets-worksheet')) {
+                return;
+            }
+
+            meta = options || {};
+            if (meta.meta) {
+                worksheetMeta = meta.meta;
+            }
+            if (!meta.worksheet_id) {
+                console.warn('ESHEETS: init called without worksheet_id');
+            }
+            isMounted = true;
+
+            this._initLoadingState();
+        },
+
+        _initLoadingState: function () {
+            var self = this;
+            var root = document.querySelector('.esheets-worksheet');
+            if (!root) return;
+
+            if (document.getElementById('es-loading-state')) return;
+
+            var loadingContainer = document.createElement('div');
+            loadingContainer.id = 'es-loading-state';
+            loadingContainer.className = 'es-loading-state';
+
+            var msg = document.createElement('div');
+            msg.className = 'es-loading-message';
+            msg.textContent = 'Loading interactive questions…';
+
+            var warning = document.createElement('div');
+            warning.className = 'es-loading-warning';
+            warning.style.display = 'none';
+            warning.textContent = 'The interactive worksheet is taking longer than expected to load. Try refreshing the page. If this keeps happening, JavaScript or ESHEETS assets may be blocked.';
+
+            loadingContainer.appendChild(msg);
+            loadingContainer.appendChild(warning);
+
+            var topScore = root.querySelector('[data-esheets-score="top"]');
+            var teacherPanel = root.querySelector('#teacherPanel') || root.querySelector('.esheets-teacher-panel');
+            
+            if (topScore && topScore.nextSibling) {
+                topScore.parentNode.insertBefore(loadingContainer, topScore.nextSibling);
+            } else if (teacherPanel && teacherPanel.nextSibling) {
+                teacherPanel.parentNode.insertBefore(loadingContainer, teacherPanel.nextSibling);
+            } else {
+                root.insertBefore(loadingContainer, root.firstChild);
+            }
+
+            var isRemoved = false;
+            var observer;
+
+            function removeLoadingState() {
+                if (isRemoved) return;
+                isRemoved = true;
+                if (loadingContainer.parentNode) {
+                    loadingContainer.parentNode.removeChild(loadingContainer);
+                }
+                if (observer) {
+                    observer.disconnect();
+                }
+                clearTimeout(timeoutId);
+                
+                if (typeof self._collapseStaticPreviewsAfterWorksheetLoad === 'function') {
+                    self._collapseStaticPreviewsAfterWorksheetLoad();
+                }
+            }
+
+            function hasUsableContent() {
+                var inputs = root.querySelectorAll('input:not([type="hidden"]), select, textarea');
+                for (var i = 0; i < inputs.length; i++) {
+                    if (!inputs[i].closest('.esheets-identity-bar') && !inputs[i].closest('.esheets-teacher-panel')) {
+                        return true;
+                    }
+                }
+                var interactives = root.querySelectorAll('.question, .es-q-row, .answer-row, canvas, svg, table, .es-btn');
+                for (var j = 0; j < interactives.length; j++) {
+                    if (!interactives[j].closest('.esheets-identity-bar') && 
+                        !interactives[j].closest('.esheets-submission-bar') && 
+                        !interactives[j].closest('.es-badge-card') &&
+                        !interactives[j].closest('.esheets-teacher-panel')) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            if (hasUsableContent()) {
+                removeLoadingState();
+                return;
+            }
+
+            observer = new MutationObserver(function () {
+                if (hasUsableContent()) {
+                    removeLoadingState();
+                }
+            });
+
+            observer.observe(root, { childList: true, subtree: true });
+
+            var timeoutId = setTimeout(function () {
+                if (!isRemoved) {
+                    msg.style.display = 'none';
+                    warning.style.display = 'block';
+                }
+            }, 11000);
+        },
+
+        _collapseStaticPreviewsAfterWorksheetLoad: function () {
+            var previews = document.querySelectorAll('[data-es-static-preview="v1"]');
+            for (var i = 0; i < previews.length; i++) {
+                var details = previews[i].querySelector('details');
+                if (details) {
+                    details.removeAttribute('open');
+                }
+            }
+        },
+
+        setTrackingAdapter: function (fn) {
+            if (typeof fn === 'function') {
+                trackingAdapter = fn;
+            }
+        },
+
+        getIdentity: function () {
+            return getIdentityStorage();
+        },
+
+        setIdentity: function (updates) {
+            var current = getIdentityStorage();
+            var changed = false;
+
+            for (var k in updates) {
+                if (Object.prototype.hasOwnProperty.call(updates, k)) {
+                    var val = updates[k];
+
+                    if (current[k] !== val) {
+                        current[k] = val;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) {
+                setIdentityStorage(current);
+            }
+            return current;
+        },
+
+        setFeedback: function (feedbackEl, state, message) {
+            if (!feedbackEl) return;
+
+            if (!feedbackEl.classList.contains('es-feedback')) {
+                feedbackEl.classList.add('es-feedback');
+            }
+
+            feedbackEl.classList.remove('es-feedback--correct', 'es-feedback--incorrect', 'es-feedback--neutral');
+
+            if (state === 'correct' || state === 'incorrect' || state === 'neutral') {
+                feedbackEl.classList.add('es-feedback--' + state);
+            }
+
+            feedbackEl.textContent = message || "";
+        },
+
+        clearFeedback: function (feedbackEl) {
+            this.setFeedback(feedbackEl, 'neutral', "");
+        },
+
+        setScore: function (score, maxScore) {
+            if (!isMounted) return;
+            if (typeof score !== 'number' || typeof maxScore !== 'number' || isNaN(score) || isNaN(maxScore)) return;
+
+            var s = Math.max(0, score);
+            var m = Math.max(1, maxScore);
+            var pct = (m > 0) ? (s / m) * 100 : 0;
+
+            // Updated label per v5.1 requirements
+            var text = 'Current score: ' + s + ' / ' + m + ' (' + formatPct(pct) + '%)';
+            updatePlaceholders(text);
+
+            if (s === 0) {
+                document.documentElement.classList.add('es-score-zero');
+            } else {
+                document.documentElement.classList.remove('es-score-zero');
+            }
+        },
+
+        submit: function (score, maxScore) {
+            if (!isMounted || !meta.worksheet_id) return;
+            if (typeof score !== 'number' || typeof maxScore !== 'number') return;
+            
+            hideBadgeUntilNextSubmit = false;
+
+            var s = Math.max(0, score);
+            var m = Math.max(1, maxScore);
+            var pct = (m > 0) ? (s / m) * 100 : 0;
+            var now = new Date().toISOString();
+
+            var record = getRecord(meta.worksheet_id) || { bestPercent: 0, bestScore: 0 };
+
+            var updates = {
+                lastScore: s,
+                lastPercent: pct,
+                lastBadge: getCreatureBadge(pct),
+                submittedAt: now,
+                maxScore: m
+            };
+
+            var currentBestPercent = record.bestPercent || 0;
+            var currentBestScore = record.bestScore || 0;
+
+            if (pct > currentBestPercent || (Math.abs(pct - currentBestPercent) < 0.001 && s > currentBestScore)) {
+                updates.bestPercent = pct;
+                updates.bestScore = s;
+            }
+
+            saveRecord(meta.worksheet_id, updates);
+
+            var payloadIdentity = getIdentityStorage();
+            if (launchTracking.active) {
+                payloadIdentity.class_code = launchTracking.class_code;
+                payloadIdentity.task_code = launchTracking.task_code;
+            }
+
+            var payload = {
+                worksheet_id: meta.worksheet_id,
+                score: s,
+                maxScore: m,
+                percent: pct,
+                submittedAt: now,
+                first_name: payloadIdentity.first_name || "",
+                last_name: payloadIdentity.last_name || "",
+                browser_code: launchTracking.active ? getBrowserDeviceCode() : "",
+                class_code: payloadIdentity.class_code || "",
+                task_code: payloadIdentity.task_code || "",
+                bestScore: updates.bestScore !== undefined ? updates.bestScore : currentBestScore,
+                bestPercent: updates.bestPercent !== undefined ? updates.bestPercent : currentBestPercent
+            };
+
+            if (typeof trackingAdapter === 'function') {
+                try {
+                    trackingAdapter(payload);
+                } catch (e) {
+                    console.warn('ESHEETS: tracking adapter error', e);
+                }
+            }
+
+            if (launchTracking.active) {
+                return fetch('https://portal.esheets.io/api/submissions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(function (res) {
+                    if (!res.ok) throw new Error('Central submission failed');
+                    return { success: true };
+                }).catch(function (err) {
+                    console.warn('ESHEETS: central submission error', err);
+                    return { success: false };
+                });
+            }
+
+            return Promise.resolve({ success: true, localOnly: true });
+        },
+
+        renderSubmissionSummary: function (container) {
+            if (!container || !meta.worksheet_id) return;
+
+            container.innerHTML = '';
+            container.classList.add('esheets-summary');
+
+            var record = getRecord(meta.worksheet_id);
+
+            if (!record || !record.submittedAt) {
+                var p = document.createElement('div');
+                p.textContent = "No previous submissions.";
+                container.appendChild(p);
+                return;
+            }
+
+            // Updated summary labels per v5.1 requirements
+            var lastText = "Last recorded: " + formatScore(record.lastScore, record.maxScore, record.lastPercent);
+            var bestText = "Personal best: " + formatScore(record.bestScore, record.maxScore, record.bestPercent);
+
+            var pLast = document.createElement('div');
+            pLast.textContent = lastText;
+
+            var pBest = document.createElement('div');
+            pBest.textContent = bestText;
+
+            container.appendChild(pLast);
+            container.appendChild(pBest);
+
+            if (record.lastBadge && !hideBadgeUntilNextSubmit) {
+                var badgeData = record.lastBadge;
+                var badgeWrap = document.createElement('div');
+                badgeWrap.className = 'es-badge-card';
+                
+                var topInfo = document.createElement('div');
+                topInfo.className = 'es-badge-top';
+                
+                var emojiName = document.createElement('div');
+                emojiName.className = 'es-badge-emoji-name';
+                emojiName.textContent = badgeData.emoji + ' ' + badgeData.name;
+                
+                var badgeMsg = document.createElement('div');
+                badgeMsg.className = 'es-badge-message';
+                badgeMsg.textContent = badgeData.msg;
+                
+                var brandWrap = document.createElement('div');
+                brandWrap.className = 'es-badge-brand';
+                brandWrap.textContent = 'Awarded by esheets.io';
+                
+                var actionWrap = document.createElement('div');
+                actionWrap.className = 'es-badge-actions';
+                
+                var copyBtn = document.createElement('button');
+                copyBtn.className = 'es-btn es-btn-secondary es-btn-small';
+                copyBtn.textContent = 'Copy achievement';
+                
+                var shareBtn = document.createElement('button');
+                shareBtn.className = 'es-btn es-btn-secondary es-btn-small';
+                shareBtn.textContent = 'Share achievement';
+                
+                var shareText = 'I completed a maths worksheet on esheets.io and earned the ' + badgeData.name + ' badge! ' + badgeData.emoji + '\nhttps://www.esheets.io/maths/';
+                
+                var handleCopy = function(btn) {
+                    var originalText = btn.textContent;
+                    var restore = function() { setTimeout(function() { btn.textContent = originalText; }, 2000); };
+                    
+                    if (navigator.clipboard && window.isSecureContext) {
+                        navigator.clipboard.writeText(shareText).then(function() {
+                            btn.textContent = "Copied!";
+                            restore();
+                        }).catch(function() {
+                            btn.textContent = "Failed!";
+                            restore();
+                        });
+                    } else {
+                        var temp = document.createElement("textarea");
+                        temp.value = shareText;
+                        temp.setAttribute('readonly', '');
+                        temp.style.position = 'absolute';
+                        temp.style.left = '-9999px';
+                        document.body.appendChild(temp);
+                        temp.select();
+                        try {
+                            var success = document.execCommand("copy");
+                            btn.textContent = success ? "Copied!" : "Failed!";
+                        } catch(e) {
+                            btn.textContent = "Failed!";
+                        }
+                        document.body.removeChild(temp);
+                        restore();
+                    }
+                };
+                
+                copyBtn.addEventListener('click', function() { handleCopy(copyBtn); });
+                
+                shareBtn.addEventListener('click', function() {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'My esheets.io Achievement',
+                            text: shareText
+                        }).catch(function(e) {
+                            if (e.name !== 'AbortError') {
+                                handleCopy(shareBtn);
+                            }
+                        });
+                    } else {
+                        handleCopy(shareBtn);
+                    }
+                });
+                
+                actionWrap.appendChild(copyBtn);
+                actionWrap.appendChild(shareBtn);
+                
+                topInfo.appendChild(emojiName);
+                topInfo.appendChild(badgeMsg);
+                topInfo.appendChild(brandWrap);
+                
+                badgeWrap.appendChild(topInfo);
+                badgeWrap.appendChild(actionWrap);
+                
+                container.appendChild(badgeWrap);
+            }
+        },
+
+        lockCorrectAnswer: function (inputs, button) {
+            if (inputs) {
+                var inputList = Array.isArray(inputs) ? inputs :
+                    (typeof NodeList !== 'undefined' && inputs instanceof NodeList ? Array.prototype.slice.call(inputs) : [inputs]);
+                for (var i = 0; i < inputList.length; i++) {
+                    var el = inputList[i];
+                    if (el) {
+                        // Completely lock the input structurally and visually
+                        el.readOnly = true;
+                        el.disabled = true;
+                        el.classList.add('es-correct-locked');
+                    }
+                }
+            }
+            if (button) {
+                // Ensure logic loops are terminated by wiping the button
+                button.style.display = 'none';
+            }
+        },
+
+        focusNextUnanswered: function (currentInput) {
+            if (!currentInput) return false;
+            var inputs = document.querySelectorAll('.esheets-worksheet input[type="text"]:not(:disabled):not([readonly]), .esheets-worksheet input[type="number"]:not(:disabled):not([readonly])');
+            var foundCurrent = false;
+            for (var i = 0; i < inputs.length; i++) {
+                if (foundCurrent && inputs[i] !== currentInput && inputs[i].offsetParent !== null) {
+                    inputs[i].focus();
+                    return true;
+                }
+                if (inputs[i] === currentInput) {
+                    foundCurrent = true;
+                }
+            }
+            return false;
+        },
+
+        mountSubmissionBar: function (config) {
+            if (!config || !config.containerEl) return;
+
+            var container = config.containerEl;
+
+            var topScoreEl = document.querySelector('[data-esheets-score="top"]');
+            var topLockout = null;
+            if (topScoreEl && topScoreEl.parentNode) {
+                topLockout = document.createElement('div');
+                topLockout.className = 'es-lockout-message';
+                topLockout.style.display = 'none';
+                topLockout.textContent = 'Answers were revealed. Record my score is disabled until new questions are generated.';
+                if (topScoreEl.nextSibling) {
+                    topScoreEl.parentNode.insertBefore(topLockout, topScoreEl.nextSibling);
+                } else {
+                    topScoreEl.parentNode.appendChild(topLockout);
+                }
+            }
+
+            var bottomLockout = document.createElement('div');
+            bottomLockout.className = 'es-lockout-message';
+            bottomLockout.style.display = 'none';
+            bottomLockout.textContent = 'Answers were revealed. Record my score is disabled until new questions are generated.';
+
+            if (container.parentNode) {
+                container.parentNode.insertBefore(bottomLockout, container);
+            }
+
+            container.innerHTML = '';
+            container.classList.add('esheets-submission-bar');
+
+            var wrap = document.createElement('div');
+            wrap.className = 'esheets-btn-group';
+
+            var btnRecord = document.createElement('button');
+            btnRecord.textContent = "Record my score";
+            btnRecord.className = 'esheets-btn esheets-btn-primary';
+            btnRecord.disabled = true;
+
+            var btnReset = document.createElement('button');
+            btnReset.textContent = "New questions";
+            btnReset.className = 'esheets-btn esheets-btn-secondary';
+
+            wrap.appendChild(btnRecord);
+            wrap.appendChild(btnReset);
+            container.appendChild(wrap);
+
+            var confirmDiv = document.createElement('div');
+            confirmDiv.className = 'esheets-confirm-ui';
+            confirmDiv.style.display = 'none';
+
+            confirmDiv.innerHTML =
+                '<p>Start new questions? This will reset your current progress.</p>' +
+                '<div class="esheets-btn-group">' +
+                '<button class="esheets-btn esheets-btn-secondary" data-action="cancel">Cancel</button>' +
+                '<button class="esheets-btn esheets-btn-primary" data-action="confirm">Yes, start new</button>' +
+                '</div>';
+
+            container.appendChild(confirmDiv);
+
+            var summaryDiv = document.createElement('div');
+            container.appendChild(summaryDiv);
+
+            ESHEETS.renderSubmissionSummary(summaryDiv);
+
+            btnRecord.addEventListener('click', function () {
+                var data = config.getScore ? config.getScore() : { score: 0, maxScore: 0 };
+
+                btnRecord.disabled = true;
+                btnRecord.textContent = "Recording...";
+
+                var existingErr = container.querySelector('.es-submit-error');
+                if (existingErr) existingErr.remove();
+
+                var submitResult = ESHEETS.submit(data.score, data.maxScore);
+                ESHEETS.renderSubmissionSummary(summaryDiv);
+
+                if (submitResult && typeof submitResult.then === 'function') {
+                    submitResult.then(function (res) {
+                        if (res && res.success === false) {
+                            btnRecord.textContent = "Record my score";
+                            btnRecord.disabled = false;
+
+                            var errDiv = document.createElement('div');
+                            errDiv.className = 'es-submit-error';
+                            errDiv.style.color = '#d32f2f';
+                            errDiv.style.backgroundColor = '#fff2f2';
+                            errDiv.style.border = '1px solid #ffcdd2';
+                            errDiv.style.padding = '0.75rem';
+                            errDiv.style.borderRadius = '4px';
+                            errDiv.style.marginTop = '0.5rem';
+                            errDiv.style.fontSize = '0.9em';
+                            errDiv.textContent = "Your score was saved on this device, but could not be sent to your teacher. Please check that you entered both your first name and last name, then try again.";
+                            if (summaryDiv.parentNode) {
+                                summaryDiv.parentNode.insertBefore(errDiv, summaryDiv);
+                            }
+                        } else {
+                            btnRecord.textContent = "Recorded!";
+                        }
+                    });
+                } else {
+                    btnRecord.textContent = "Recorded!";
+                }
+            });
+
+            btnReset.addEventListener('click', function () {
+                confirmDiv.style.display = 'block';
+                wrap.style.display = 'none';
+            });
+
+            confirmDiv.addEventListener('click', function (e) {
+                if (e.target.tagName !== 'BUTTON') return;
+                var action = e.target.getAttribute('data-action');
+
+                if (action === 'confirm') {
+                    lockoutActive = false;
+                    lockoutUIHandler();
+                    hideBadgeUntilNextSubmit = true;
+                    if (config.onNewQuestions) config.onNewQuestions();
+                    ESHEETS.renderSubmissionSummary(summaryDiv);
+                    confirmDiv.style.display = 'none';
+                    wrap.style.display = 'flex';
+                    btnRecord.textContent = "Record my score";
+                } else if (action === 'cancel') {
+                    confirmDiv.style.display = 'none';
+                    wrap.style.display = 'flex';
+                }
+            });
+
+            lockoutUIHandler = function () {
+                if (lockoutActive) {
+                    if (topLockout) topLockout.style.display = 'block';
+                    bottomLockout.style.display = 'block';
+                    btnRecord.disabled = true;
+                } else {
+                    if (topLockout) topLockout.style.display = 'none';
+                    bottomLockout.style.display = 'none';
+                }
+            };
+            lockoutUIHandler();
+
+            renderTopicGuideJumpLink();
+            renderTeacherSignupCta();
+
+            return {
+                recordBtn: btnRecord,
+                updateState: function (score) {
+                    if (lockoutActive) {
+                        btnRecord.disabled = true;
+                        return;
+                    }
+                    if (score > 0) {
+                        btnRecord.disabled = false;
+                        if (btnRecord.textContent === "Recorded!") btnRecord.textContent = "Record my score";
+                    } else {
+                        btnRecord.disabled = true;
+                    }
+                }
+            };
+        },
+
+        mountIdentityBar: function (config) {
+            if (!document.querySelector('.esheets-worksheet')) return;
+            if (!config || !config.containerEl) return;
+
+            var container = config.containerEl;
+            var identity = getIdentityStorage();
+            var params = new URLSearchParams(window.location.search);
+            var updates = {};
+
+            function checkParams(keys, allowEmpty) {
+                if (!keys || !Array.isArray(keys)) return null;
+                for (var i = 0; i < keys.length; i++) {
+                    if (params.has(keys[i])) {
+                        var val = params.get(keys[i]);
+                        if (val || allowEmpty) return val;
+                    }
+                }
+                return null;
+            }
+
+            var parsedClass = "";
+            var parsedTask = "";
+
+            if (config.queryPrefill) {
+                var qp = config.queryPrefill;
+
+                if (qp.first_name && qp.first_name.paramAnyOf) {
+                    var fVal = checkParams(qp.first_name.paramAnyOf, qp.first_name.allowEmpty);
+                    if (fVal !== null) updates.first_name = fVal;
+                }
+
+                if (qp.last_name && qp.last_name.paramAnyOf) {
+                    var lVal = checkParams(qp.last_name.paramAnyOf, qp.last_name.allowEmpty);
+                    if (lVal !== null) updates.last_name = lVal;
+                }
+
+                if (qp.class_code && qp.class_code.paramAnyOf) {
+                    parsedClass = checkParams(qp.class_code.paramAnyOf, qp.class_code.allowEmpty) || "";
+                }
+
+                if (qp.task_code && qp.task_code.paramAnyOf) {
+                    parsedTask = checkParams(qp.task_code.paramAnyOf, qp.task_code.allowEmpty) || "";
+                }
+
+                if (qp.name && qp.name.paramAnyOf) {
+                    var nVal = checkParams(qp.name.paramAnyOf, qp.name.allowEmpty);
+                    if (nVal !== null) {
+                        var parts = nVal.trim().split(/\s+/);
+                        if (parts.length > 0) {
+                            if (!updates.first_name) updates.first_name = parts[0];
+                            if (!updates.last_name) updates.last_name = parts.slice(1).join(' ');
+                        }
+                    }
+                }
+
+            } else {
+                var fValDef = checkParams(["first", "firstname", "fname"], false);
+                if (fValDef !== null) updates.first_name = fValDef;
+
+                var lValDef = checkParams(["last", "lastname", "lname"], false);
+                if (lValDef !== null) updates.last_name = lValDef;
+
+                parsedClass = checkParams(["class", "class_code", "classcode"], false) || "";
+                parsedTask = checkParams(["task", "task_code", "taskcode"], false) || "";
+
+                if (params.has("name")) {
+                    var nValDef = params.get("name");
+                    if (nValDef) {
+                        var partsDef = nValDef.trim().split(/\s+/);
+                        if (partsDef.length > 0) {
+                            if (!updates.first_name) updates.first_name = partsDef[0];
+                            if (!updates.last_name) updates.last_name = partsDef.slice(1).join(' ');
+                        }
+                    }
+                }
+            }
+
+            // Dual tracking check layer - Strict Launch Context (No Persistence)
+            var activeClass = normalizeTrackingCode(parsedClass);
+            var activeTask = normalizeTrackingCode(parsedTask);
+            var isTrackingActive = isValidTrackingCode(activeClass) && isValidTrackingCode(activeTask);
+
+            if (isTrackingActive) {
+                launchTracking.class_code = activeClass;
+                launchTracking.task_code = activeTask;
+                launchTracking.active = true;
+            } else {
+                launchTracking.class_code = "";
+                launchTracking.task_code = "";
+                launchTracking.active = false;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                identity = ESHEETS.setIdentity(updates);
+            }
+
+            container.innerHTML = '';
+            container.classList.add('esheets-identity-bar');
+
+            var showFirst = (!config.fields || config.fields.first_name !== false);
+            var showLast = (!config.fields || config.fields.last_name !== false);
+
+            var printHeaderFields = {};
+
+            function createField(label, key, value) {
+                var wrap = document.createElement('div');
+                wrap.className = 'es-id-field';
+
+                var lbl = document.createElement('label');
+                lbl.textContent = label;
+
+                var inp = document.createElement('input');
+                inp.type = 'text';
+                inp.className = 'es-input';
+                inp.value = value || '';
+                inp.placeholder = '...';
+
+                inp.addEventListener('change', function () {
+                    var u = {};
+                    u[key] = inp.value;
+                    ESHEETS.setIdentity(u);
+
+                    var current = getIdentityStorage();
+                    if (current[key] !== inp.value) {
+                        inp.value = current[key];
+                    }
+                    if (printHeaderFields[key]) {
+                        printHeaderFields[key].textContent = current[key] || '____________________';
+                    }
+                });
+
+                wrap.appendChild(lbl);
+                wrap.appendChild(inp);
+                return wrap;
+            }
+
+            if (isTrackingActive) {
+                container.classList.remove('es-tracking-inactive');
+                var inputsWrap = document.createElement('div');
+                inputsWrap.className = 'es-id-row';
+
+                if (showFirst) {
+                    inputsWrap.appendChild(createField('First name:', 'first_name', identity.first_name));
+                }
+                if (showLast) {
+                    inputsWrap.appendChild(createField('Last name:', 'last_name', identity.last_name));
+                }
+
+                container.appendChild(inputsWrap);
+
+                var devCode = getBrowserDeviceCode();
+                var warnMsg = document.createElement('div');
+                warnMsg.className = 'es-student-warning';
+                warnMsg.textContent = 'Your entered name and this browser’s device code ' + devCode + ' will be sent to your teacher when you record your score.';
+                container.appendChild(warnMsg);
+            } else {
+                container.classList.add('es-tracking-inactive');
+            }
+
+            // Print Header Setup
+            var printHeader = document.createElement('div');
+            printHeader.className = 'es-print-header';
+
+            var printHeaderFirstWrap = document.createElement('div');
+            var dispFirst = isTrackingActive ? (identity.first_name || '____________________') : '____________________';
+            printHeaderFirstWrap.innerHTML = 'First Name: <span>' + dispFirst + '</span>';
+            printHeaderFields.first_name = printHeaderFirstWrap.querySelector('span');
+
+            var printHeaderLastWrap = document.createElement('div');
+            var dispLast = isTrackingActive ? (identity.last_name || '____________________') : '____________________';
+            printHeaderLastWrap.innerHTML = 'Last Name: <span>' + dispLast + '</span>';
+            printHeaderFields.last_name = printHeaderLastWrap.querySelector('span');
+
+            printHeader.appendChild(printHeaderFirstWrap);
+            printHeader.appendChild(printHeaderLastWrap);
+
+            container.appendChild(printHeader);
+        },
+
+        mountTeacherPanel: function (config) {
+            if (!config || !config.containerEl) return;
+
+            var panelEl = config.containerEl;
+            panelEl.classList.add('esheets-teacher-panel');
+
+            var isRevealed = false;
+            var originalValues = new Map();
+
+            var unlocked = false;
+            var params = new URLSearchParams(window.location.search);
+
+            if (config.unlock && Array.isArray(config.unlock.queryParamAnyOf)) {
+                config.unlock.queryParamAnyOf.forEach(function (param) {
+                    if (params.has(param)) {
+                        var val = params.get(param);
+                        if (config.unlock.allowValues && Array.isArray(config.unlock.allowValues)) {
+                            if (config.unlock.allowValues.indexOf(val) !== -1 || config.unlock.allowValues.indexOf('*') !== -1) {
+                                unlocked = true;
+                            }
+                        } else if (val) {
+                            unlocked = true;
+                        }
+                    }
+                });
+            }
+
+            function setTeacherMode(isTeacher) {
+                document.documentElement.classList.toggle('esheets-teacher', isTeacher);
+                panelEl.style.display = isTeacher ? 'flex' : 'none';
+            }
+
+            setTeacherMode(unlocked);
+
+            var panelHTML =
+                '<div class="es-tp-header">Help Mode</div>' +
+                '<div class="es-tp-actions">' +
+                '<button class="es-btn es-btn-small es-btn-secondary" id="es-tp-reveal">Reveal Answers</button>' +
+                '<button class="es-btn es-btn-small es-btn-secondary" id="es-tp-print">Print Worksheet</button>' +
+                '<button class="es-btn es-btn-small es-btn-secondary" id="es-tp-copy" title="Copy current page address">Copy Address</button>' +
+                '<button class="es-btn-outline es-tp-close" id="es-tp-close" title="Hide Panel (Ctrl+Alt+H)" style="margin-left: 0.5rem;">&#10006;</button>' +
+                '</div>';
+
+            if (launchTracking.active) {
+                panelHTML += '<div class="es-tp-tracking-info">Tracking Active &mdash; Class: ' + launchTracking.class_code + ' | Task: ' + launchTracking.task_code + '</div>';
+            }
+
+            panelEl.innerHTML = panelHTML;
+
+            var revealBtn = panelEl.querySelector('#es-tp-reveal');
+            var printBtn = panelEl.querySelector('#es-tp-print');
+            var copyBtn = panelEl.querySelector('#es-tp-copy');
+            var closeBtn = panelEl.querySelector('#es-tp-close');
+
+            if (revealBtn) {
+                revealBtn.addEventListener('click', function () {
+                    if (typeof config.getAnswerItems !== 'function') return;
+                    var items = config.getAnswerItems();
+
+                    if (!isRevealed) {
+                        items.forEach(function (item) {
+                            if (item.inputEl) {
+                                if (!originalValues.has(item.inputEl)) {
+                                    originalValues.set(item.inputEl, {
+                                        value: item.inputEl.value,
+                                        disabled: item.inputEl.disabled,
+                                        wasRevealed: item.inputEl.classList.contains('es-revealed'),
+                                        isCorrectLocked: item.inputEl.classList.contains('es-correct-locked')
+                                    });
+                                }
+
+                                if (!item.inputEl.classList.contains('es-correct-locked')) {
+                                    item.inputEl.value = item.answer;
+                                    item.inputEl.disabled = true;
+                                    item.inputEl.classList.add('es-revealed');
+                                }
+                            }
+                            if (item.checkBtnEl && item.checkBtnEl.style.display !== 'none') {
+                                item.checkBtnEl.style.visibility = 'hidden';
+                            }
+                            if (item.feedbackEl && (!item.inputEl || !item.inputEl.classList.contains('es-correct-locked'))) {
+                                if (!item.feedbackEl.hasAttribute('data-original')) {
+                                    item.feedbackEl.setAttribute('data-original', item.feedbackEl.innerHTML);
+                                    item.feedbackEl.innerHTML = '<span class="es-muted" style="font-style: italic; font-weight: normal;">Revealed answer</span>';
+                                }
+                            }
+                        });
+                        revealBtn.textContent = "Hide Answers";
+                        isRevealed = true;
+                        lockoutActive = true;
+                        lockoutUIHandler();
+                    } else {
+                        items.forEach(function (item) {
+                            if (item.inputEl && originalValues.has(item.inputEl)) {
+                                var orig = originalValues.get(item.inputEl);
+                                if (!orig.isCorrectLocked) {
+                                    item.inputEl.value = orig.value;
+                                    item.inputEl.disabled = orig.disabled;
+                                }
+                                if (!orig.wasRevealed) item.inputEl.classList.remove('es-revealed');
+                            }
+                            if (item.checkBtnEl && item.checkBtnEl.style.display !== 'none') {
+                                item.checkBtnEl.style.visibility = '';
+                            }
+                            if (item.feedbackEl && item.feedbackEl.hasAttribute('data-original') && (!item.inputEl || !item.inputEl.classList.contains('es-correct-locked'))) {
+                                item.feedbackEl.innerHTML = item.feedbackEl.getAttribute('data-original');
+                                item.feedbackEl.removeAttribute('data-original');
+                            }
+                        });
+                        revealBtn.textContent = "Reveal Answers";
+                        isRevealed = false;
+                    }
+                });
+            }
+
+            if (printBtn) {
+                printBtn.addEventListener('click', function () {
+                    window.print();
+                });
+            }
+
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function () {
+                    var originalText = copyBtn.textContent;
+                    var restore = function() { setTimeout(function() { copyBtn.textContent = originalText; }, 2000); };
+                    
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(window.location.href).then(function() {
+                            copyBtn.textContent = "Copied!";
+                            restore();
+                        }).catch(function() {
+                            copyBtn.textContent = "Failed!";
+                            restore();
+                        });
+                    } else {
+                        var temp = document.createElement("input");
+                        temp.value = window.location.href;
+                        document.body.appendChild(temp);
+                        temp.select();
+                        try {
+                            document.execCommand("copy");
+                            copyBtn.textContent = "Copied!";
+                        } catch(e) {
+                            copyBtn.textContent = "Failed!";
+                        }
+                        document.body.removeChild(temp);
+                        restore();
+                    }
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function () {
+                    setTeacherMode(false);
+                });
+            }
+
+            document.addEventListener('keydown', function (e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+
+                if (e.ctrlKey && e.altKey && (e.key === 'h' || e.key === 'H')) {
+                    e.preventDefault();
+                    var currentlyTeacher = document.documentElement.classList.contains('esheets-teacher');
+                    setTeacherMode(!currentlyTeacher);
+                }
+            });
+        },
+
+        getProgress: function () {
+            if (!meta.worksheet_id) return null;
+            return getRecord(meta.worksheet_id);
+        }
+    });
+
+})();
+
+/* ESHEETS v5.1q additions — staged tracked-submission snapshots. */
+(function () {
+    'use strict';
+
+    if (!window.ESHEETS || window.ESHEETS.__snapshotQInstalled) return;
+    window.ESHEETS.__snapshotQInstalled = true;
+
+    var PORTAL_SUBMISSION_URL = 'https://portal.esheets.io/api/submissions';
+    var SNAPSHOT_FORMAT_VERSION = 1;
+    var CLIENT_SNAPSHOT_LIMIT = 440 * 1024;
+    var CLIENT_REQUEST_LIMIT = 900 * 1024;
+    var TRACKING_CODE_REGEX = /^[A-HJ-NP-Z2-9]{5}$/;
+    var answerItemsProvider = null;
+    var cachedStyleMarkup = null;
+
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function normaliseUrl(input, baseUrl) {
+        try {
+            return new URL(input, baseUrl).href;
+        } catch (error) {
+            return '';
+        }
+    }
+
+    function nextBrowserTurn() {
+        return new Promise(function (resolve) {
+            if (typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(function () {
+                    window.setTimeout(resolve, 0);
+                });
+            } else {
+                window.setTimeout(resolve, 0);
+            }
+        });
+    }
+
+    function getElementIndexMap(sourceRoot, cloneRoot) {
+        var sourceElements = [sourceRoot].concat(Array.prototype.slice.call(sourceRoot.querySelectorAll('*')));
+        var cloneElements = [cloneRoot].concat(Array.prototype.slice.call(cloneRoot.querySelectorAll('*')));
+        var map = new Map();
+        var length = Math.min(sourceElements.length, cloneElements.length);
+        for (var i = 0; i < length; i++) map.set(sourceElements[i], cloneElements[i]);
+        return map;
+    }
+
+    function getAnswerState(sourceRoot, cloneRoot) {
+        var answerValues = new Map();
+        var revealedControls = new Set();
+
+        if (typeof answerItemsProvider !== 'function') {
+            return { answerValues: answerValues, revealedControls: revealedControls };
+        }
+
+        var items = answerItemsProvider() || [];
+        if (!Array.isArray(items)) items = Array.prototype.slice.call(items || []);
+        var elementMap = getElementIndexMap(sourceRoot, cloneRoot);
+
+        items.forEach(function (item) {
+            if (!item) return;
+
+            if (item.inputEl && sourceRoot.contains(item.inputEl) && !item.inputEl.classList.contains('es-correct-locked')) {
+                answerValues.set(item.inputEl, item.answer == null ? '' : String(item.answer));
+                revealedControls.add(item.inputEl);
+            }
+
+            if (item.feedbackEl && sourceRoot.contains(item.feedbackEl)) {
+                var cloneFeedback = elementMap.get(item.feedbackEl);
+                if (cloneFeedback && (!item.inputEl || !item.inputEl.classList.contains('es-correct-locked'))) {
+                    cloneFeedback.innerHTML = '<span class="es-muted" style="font-style: italic; font-weight: normal;">Revealed answer</span>';
+                }
+            }
+        });
+
+        return { answerValues: answerValues, revealedControls: revealedControls };
+    }
+
+    function buildStaticControl(sourceControl, cloneControl, doc, answerState) {
+        var tagName = sourceControl.tagName.toLowerCase();
+        var type = (sourceControl.type || '').toLowerCase();
+
+        if (tagName === 'input' && type === 'hidden') {
+            cloneControl.remove();
+            return;
+        }
+
+        var replacement = doc.createElement(tagName === 'textarea' ? 'div' : 'span');
+        replacement.className = [
+            'es-snapshot-control',
+            sourceControl.className || '',
+            type ? 'es-snapshot-' + type : ''
+        ].join(' ').trim();
+
+        if (answerState && answerState.revealedControls.has(sourceControl)) {
+            replacement.classList.add('es-revealed');
+        }
+        if (sourceControl.id) replacement.setAttribute('data-source-id', sourceControl.id);
+        if (sourceControl.getAttribute('aria-label')) {
+            replacement.setAttribute('aria-label', sourceControl.getAttribute('aria-label'));
+        }
+
+        var hasAnswerOverride = answerState && answerState.answerValues.has(sourceControl);
+        var displayValue = '';
+
+        if (hasAnswerOverride) {
+            displayValue = answerState.answerValues.get(sourceControl);
+        } else if (tagName === 'select') {
+            displayValue = Array.prototype.slice.call(sourceControl.selectedOptions || [])
+                .map(function (option) { return option.textContent.trim(); })
+                .join(', ');
+        } else if (tagName === 'textarea') {
+            displayValue = sourceControl.value;
+        } else if (type === 'radio') {
+            displayValue = sourceControl.checked ? '◉' : '○';
+            replacement.setAttribute('data-checked', sourceControl.checked ? 'true' : 'false');
+        } else if (type === 'checkbox') {
+            displayValue = sourceControl.checked ? '☑' : '☐';
+            replacement.setAttribute('data-checked', sourceControl.checked ? 'true' : 'false');
+        } else if (type === 'range') {
+            displayValue = sourceControl.value;
+            replacement.setAttribute('data-range-value', sourceControl.value);
+        } else {
+            displayValue = sourceControl.value;
+        }
+
+        replacement.textContent = displayValue || '';
+        if (displayValue === '') replacement.setAttribute('data-empty', 'true');
+        if (sourceControl.disabled) replacement.setAttribute('data-disabled', 'true');
+        if (sourceControl.readOnly) replacement.setAttribute('data-readonly', 'true');
+        cloneControl.replaceWith(replacement);
+    }
+
+    function copyLiveControls(sourceRoot, cloneRoot, doc, answerState) {
+        var sourceControls = Array.prototype.slice.call(sourceRoot.querySelectorAll('input, textarea, select'));
+        var cloneControls = Array.prototype.slice.call(cloneRoot.querySelectorAll('input, textarea, select'));
+
+        sourceControls.forEach(function (sourceControl, index) {
+            if (cloneControls[index]) buildStaticControl(sourceControl, cloneControls[index], doc, answerState);
+        });
+    }
+
+    function replaceCanvases(sourceRoot, cloneRoot, doc) {
+        var sourceCanvases = Array.prototype.slice.call(sourceRoot.querySelectorAll('canvas'));
+        var cloneCanvases = Array.prototype.slice.call(cloneRoot.querySelectorAll('canvas'));
+
+        sourceCanvases.forEach(function (sourceCanvas, index) {
+            var cloneCanvas = cloneCanvases[index];
+            if (!cloneCanvas) return;
+
+            try {
+                var image = doc.createElement('img');
+                image.className = ((sourceCanvas.className || '') + ' es-snapshot-canvas-image').trim();
+                image.alt = sourceCanvas.getAttribute('aria-label') || 'Captured worksheet diagram';
+                image.src = sourceCanvas.toDataURL('image/png');
+                image.width = sourceCanvas.width;
+                image.height = sourceCanvas.height;
+                image.style.maxWidth = '100%';
+                image.style.height = 'auto';
+                cloneCanvas.replaceWith(image);
+            } catch (error) {
+                var placeholder = doc.createElement('div');
+                placeholder.className = 'es-snapshot-canvas-failure';
+                placeholder.textContent = 'This diagram could not be captured.';
+                cloneCanvas.replaceWith(placeholder);
+            }
+        });
+    }
+
+    function removeInteractiveUi(cloneRoot) {
+        var selectors = [
+            '#teacherPanel', '.esheets-teacher-panel',
+            '#identityBar', '.esheets-identity-bar',
+            '#submissionBar', '.esheets-submission-bar',
+            '.es-lockout-message', '#es-teacher-signup-cta', '#es-topic-guide-jump',
+            'script', 'noscript', 'button', '.es-btn', '[data-snapshot-exclude]'
+        ];
+
+        selectors.forEach(function (selector) {
+            Array.prototype.slice.call(cloneRoot.querySelectorAll(selector)).forEach(function (element) {
+                element.remove();
+            });
+        });
+
+        Array.prototype.slice.call(cloneRoot.querySelectorAll('a')).forEach(function (anchor) {
+            anchor.removeAttribute('href');
+            anchor.removeAttribute('target');
+        });
+
+        Array.prototype.slice.call(cloneRoot.querySelectorAll('*')).forEach(function (element) {
+            Array.prototype.slice.call(element.attributes).forEach(function (attribute) {
+                if (/^on/i.test(attribute.name) || attribute.name === 'contenteditable') {
+                    element.removeAttribute(attribute.name);
+                }
+            });
+        });
+    }
+
+    function collectStyleMarkup(sourceDocument) {
+        if (cachedStyleMarkup !== null) return cachedStyleMarkup;
+
+        var baseUrl = sourceDocument.location.href;
+        var linkedStyles = Array.prototype.slice.call(sourceDocument.querySelectorAll('link[rel~="stylesheet"]'))
+            .map(function (link) {
+                var href = normaliseUrl(link.getAttribute('href'), baseUrl);
+                return href ? '<link rel="stylesheet" href="' + escapeHtml(href) + '">' : '';
+            })
+            .filter(Boolean)
+            .join('\n');
+
+        var inlineStyles = Array.prototype.slice.call(sourceDocument.querySelectorAll('style'))
+            .map(function (style) { return '<style>' + (style.textContent || '') + '</style>'; })
+            .join('\n');
+
+        cachedStyleMarkup = linkedStyles + '\n' + inlineStyles;
+        return cachedStyleMarkup;
+    }
+
+    function createSnapshot(sourceDocument, kind) {
+        var sourceRoot = sourceDocument.querySelector('.esheets-worksheet');
+        if (!sourceRoot) throw new Error('No worksheet container was found.');
+
+        var isAnswers = kind === 'answers';
+        var cloneRoot = sourceRoot.cloneNode(true);
+        var answerState = isAnswers ? getAnswerState(sourceRoot, cloneRoot) : null;
+
+        copyLiveControls(sourceRoot, cloneRoot, sourceDocument, answerState);
+        replaceCanvases(sourceRoot, cloneRoot, sourceDocument);
+        removeInteractiveUi(cloneRoot);
+
+        var title = sourceDocument.title || 'Worksheet snapshot';
+        var sourceUrl = sourceDocument.location.href;
+        var capturedAt = new Date().toISOString();
+        var heading = isAnswers ? 'Worksheet answer view' : 'Student response';
+        var note = isAnswers
+            ? 'Captured from the worksheet’s own answer provider.'
+            : 'Captured from the student’s marked worksheet state.';
+
+        var snapshotCss = [
+            'html { background: #f3f4f6; }',
+            'body { margin: 0; padding: 1rem; background: #f3f4f6; }',
+            '.es-lockout-message { display: none !important; }',
+            '.es-snapshot-meta { max-width: 900px; margin: 0 auto 1rem; padding: 0.75rem 1rem; background: #fff8d8; border: 1px solid #dec76d; border-radius: 8px; font: 14px/1.45 system-ui, sans-serif; }',
+            '.es-snapshot-control { display: inline-block; min-width: 2.25em; min-height: 1.4em; box-sizing: border-box; padding: 0.18em 0.4em; margin: 0 0.1em; border: 1px solid #777; border-radius: 4px; background: #fff; color: #111; text-align: center; vertical-align: middle; white-space: pre-wrap; }',
+            '.es-snapshot-control[data-empty="true"]::before { content: "\\00a0"; }',
+            '.es-snapshot-radio, .es-snapshot-checkbox { min-width: 1.4em; padding: 0; border: 0; background: transparent; font-size: 1.15em; }',
+            '.es-snapshot-control.es-correct-locked, .es-snapshot-control.correct, .correct .es-snapshot-control { border-color: #198754; background: #d1e7dd; }',
+            '.es-snapshot-control.incorrect, .incorrect .es-snapshot-control { border-color: #dc3545; background: #f8d7da; }',
+            '.es-snapshot-control.es-revealed { border-color: #8a6d1d; background: #fff3cd; }',
+            '.es-snapshot-canvas-image { display: block; }',
+            '.es-snapshot-canvas-failure { padding: 1rem; border: 2px dashed #b42318; color: #b42318; background: #fff; }'
+        ].join('\n');
+
+        var html = '<!doctype html>\n' +
+            '<html lang="en" data-snapshot-kind="' + (isAnswers ? 'answers' : 'student') + '">\n' +
+            '<head>\n<meta charset="utf-8">\n' +
+            '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+            '<base href="' + escapeHtml(sourceUrl) + '">\n' +
+            '<title>' + escapeHtml(title) + ' — ' + escapeHtml(isAnswers ? 'worksheet answers' : 'student response') + '</title>\n' +
+            collectStyleMarkup(sourceDocument) + '\n<style>' + snapshotCss + '</style>\n</head>\n<body>\n' +
+            '<div class="es-snapshot-meta"><strong>' + escapeHtml(heading) + '</strong><br>' +
+            escapeHtml(note) + '<br>Captured: ' + escapeHtml(capturedAt) + '</div>\n' +
+            cloneRoot.outerHTML + '\n</body>\n</html>';
+
+        return {
+            html: html,
+            byteLength: new Blob([html]).size
+        };
+    }
+
+    function isPortalSubmissionRequest(input) {
+        var url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+        return String(url || '').replace(/\/+$/, '') === PORTAL_SUBMISSION_URL;
+    }
+
+    function isTrackedPayload(payload) {
+        return payload &&
+            TRACKING_CODE_REGEX.test(String(payload.class_code || '').trim().toUpperCase()) &&
+            TRACKING_CODE_REGEX.test(String(payload.task_code || '').trim().toUpperCase());
+    }
+
+    function sendWithSnapshots(originalFetch, input, init, payload) {
+        var amended = {};
+        Object.keys(init || {}).forEach(function (key) { amended[key] = init[key]; });
+
+        return nextBrowserTurn()
+            .then(function () {
+                try {
+                    var student = createSnapshot(document, 'student');
+                    if (student.byteLength <= CLIENT_SNAPSHOT_LIMIT) {
+                        payload.student_snapshot_html = student.html;
+                    } else {
+                        console.warn('ESHEETS: student snapshot exceeded the client size limit and was omitted.');
+                    }
+                } catch (error) {
+                    console.warn('ESHEETS: student snapshot capture failed', error);
+                }
+                return nextBrowserTurn();
+            })
+            .then(function () {
+                if (!payload.student_snapshot_html || typeof answerItemsProvider !== 'function') return;
+                try {
+                    var answers = createSnapshot(document, 'answers');
+                    if (answers.byteLength <= CLIENT_SNAPSHOT_LIMIT) {
+                        payload.answer_snapshot_html = answers.html;
+                    } else {
+                        console.warn('ESHEETS: answer snapshot exceeded the client size limit and was omitted.');
+                    }
+                } catch (error) {
+                    console.warn('ESHEETS: answer snapshot capture failed', error);
+                }
+            })
+            .catch(function (error) {
+                console.warn('ESHEETS: snapshot preparation failed; submitting the score without snapshots.', error);
+            })
+            .then(function () {
+                if (payload.student_snapshot_html) {
+                    payload.snapshot_format_version = SNAPSHOT_FORMAT_VERSION;
+                } else {
+                    delete payload.answer_snapshot_html;
+                    delete payload.snapshot_format_version;
+                }
+
+                var body = JSON.stringify(payload);
+                if (new Blob([body]).size > CLIENT_REQUEST_LIMIT && payload.answer_snapshot_html) {
+                    delete payload.answer_snapshot_html;
+                    body = JSON.stringify(payload);
+                }
+                if (new Blob([body]).size > CLIENT_REQUEST_LIMIT && payload.student_snapshot_html) {
+                    delete payload.student_snapshot_html;
+                    delete payload.snapshot_format_version;
+                    body = JSON.stringify(payload);
+                    console.warn('ESHEETS: combined snapshot request exceeded the client size limit; submitting the score only.');
+                }
+
+                amended.body = body;
+                return originalFetch(input, amended);
+            });
+    }
+
+    var originalFetch = window.fetch && window.fetch.bind(window);
+    if (originalFetch) {
+        window.fetch = function (input, init) {
+            if (!isPortalSubmissionRequest(input) || !init || typeof init.body !== 'string') {
+                return originalFetch(input, init);
+            }
+
+            var payload;
+            try {
+                payload = JSON.parse(init.body);
+            } catch (error) {
+                return originalFetch(input, init);
+            }
+
+            if (!isTrackedPayload(payload)) return originalFetch(input, init);
+            return sendWithSnapshots(originalFetch, input, init, payload);
+        };
+    }
+
+    var originalMountTeacherPanel = window.ESHEETS.mountTeacherPanel;
+    if (typeof originalMountTeacherPanel === 'function') {
+        window.ESHEETS.mountTeacherPanel = function (config) {
+            answerItemsProvider = config && typeof config.getAnswerItems === 'function'
+                ? config.getAnswerItems
+                : null;
+            return originalMountTeacherPanel.apply(this, arguments);
+        };
+    }
+
+    function trackedLaunchVisible() {
+        if (document.querySelector('.es-student-warning')) return true;
+
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var classCode = params.get('class') || params.get('class_code') || params.get('classcode') || '';
+            var taskCode = params.get('task') || params.get('task_code') || params.get('taskcode') || '';
+            return TRACKING_CODE_REGEX.test(String(classCode).trim().toUpperCase()) &&
+                TRACKING_CODE_REGEX.test(String(taskCode).trim().toUpperCase());
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function revealLockoutVisible() {
+        return Array.prototype.slice.call(document.querySelectorAll('.es-lockout-message')).some(function (message) {
+            return window.getComputedStyle(message).display !== 'none';
+        });
+    }
+
+    var originalMountSubmissionBar = window.ESHEETS.mountSubmissionBar;
+    if (typeof originalMountSubmissionBar === 'function') {
+        window.ESHEETS.mountSubmissionBar = function () {
+            var result = originalMountSubmissionBar.apply(this, arguments);
+            if (!result || !result.recordBtn || !trackedLaunchVisible()) return result;
+
+            var button = result.recordBtn;
+            var originalUpdateState = result.updateState;
+
+            result.updateState = function () {
+                if (typeof originalUpdateState === 'function') originalUpdateState.apply(result, arguments);
+                if (!revealLockoutVisible() && button.textContent !== 'Recording...') {
+                    button.disabled = false;
+                    if (button.textContent === 'Recorded!') button.textContent = 'Record my score';
+                }
+            };
+
+            window.setTimeout(function () {
+                if (!revealLockoutVisible() && button.textContent !== 'Recording...') button.disabled = false;
+            }, 0);
+
+            var labelObserver = new MutationObserver(function () {
+                if (button.textContent === 'Recorded!' && !revealLockoutVisible()) {
+                    window.setTimeout(function () {
+                        button.textContent = 'Record my score';
+                        button.disabled = false;
+                    }, 0);
+                }
+            });
+            labelObserver.observe(button, { childList: true, subtree: true, characterData: true });
+
+            return result;
+        };
+    }
+}());
