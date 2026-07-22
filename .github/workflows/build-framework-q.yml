@@ -1,0 +1,32 @@
+name: Build framework5_1_q
+
+on:
+  push:
+    branches:
+      - agent/worksheet-snapshot-q
+    paths:
+      - v5_1/framework5_1_q_additions.js
+      - .github/workflows/build-framework-q.yml
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/worksheet-snapshot-q
+      - name: Build standalone q asset
+        run: |
+          cat v5_1/framework5_1_o.js v5_1/framework5_1_q_additions.js > v5_1/framework5_1_q.js
+          node --check v5_1/framework5_1_q.js
+      - name: Commit generated asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add v5_1/framework5_1_q.js
+          git commit -m "Build final standalone framework5_1_q asset"
+          git push origin HEAD:agent/worksheet-snapshot-q
