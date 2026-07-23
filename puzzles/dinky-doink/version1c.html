@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +15,7 @@
 
   gtag('config', 'G-LM261TLP6C');
 </script>
-<!--maths lock has been implemented-->
+<!--messaging has been improved-->
   <style>
 
     :root {
@@ -1036,8 +1037,8 @@
             </section>
 
             <section class="bb-card bb-maths">
-              <div class="bb-maths-head"><h2>Maths reserve</h2></div>
-              <p id="bbMathsIntro">Each level has a small, finite reserve. A correct answer unlocks one reserve part.</p>
+              <div class="bb-maths-head"><h2>Unlock extra parts</h2></div>
+              <p id="bbMathsIntro">Tap a part marked “Maths unlock available” and answer one question to unlock it.</p>
               <div class="bb-question" id="bbQuestion" data-open="false">
                 <div class="bb-question-prompt" aria-live="polite">
                   <span>Question ready</span>
@@ -1072,7 +1073,7 @@
       <button class="bb-btn bb-partbtn" style="--part-colour:#2f9f96" data-add="conveyor" type="button"><span>Conveyor</span><small></small></button>
       <button class="bb-btn bb-partbtn" style="--part-colour:#e15b7d" data-add="bumper" type="button"><span>Bumper</span><small></small></button>
       <button class="bb-btn bb-partbtn" style="--part-colour:#cf4d63" data-add="magnet" type="button"><span>Magnet</span><small></small></button>
-      <div class="bb-tray-note" id="bbTrayNote">The part limit is fixed. Maths can unlock only the small reserve shown for this level.</div>
+      <div class="bb-tray-note" id="bbTrayNote">Each button shows what you can add now. Some extra parts need one correct maths answer first.</div>
     </section>
 
     <footer class="bb-footer">
@@ -2720,14 +2721,14 @@
 
       if (current >= unlockedAllowance(type)) {
         if (!canUnlockFromReserve(type)) {
-          setStatus("No reserve parts left", "The maths reserve for this challenge has been used. Solve the puzzle with the parts already available.", "warning");
+          setStatus("No extra parts left", "You have used all the parts of this type available in this challenge.", "warning");
           return;
         }
         const remaining = reserveRemaining();
         openMathsQuestion(type);
         setStatus(
-          "Use the maths reserve",
-          `Solve one question to unlock one ${PART_NAMES[type].toLowerCase()}. ${remaining} reserve ${remaining === 1 ? "unlock remains" : "unlocks remain"} in this challenge.`,
+          "Maths unlock needed",
+          `Answer one question to unlock one ${PART_NAMES[type].toLowerCase()}. ${remaining} maths ${remaining === 1 ? "unlock is" : "unlocks are"} still available in this challenge.`,
           "warning"
         );
         return;
@@ -2776,7 +2777,7 @@
       invalidateReplay();
       state.parts = state.parts.filter(candidate => candidate.id !== state.selectedId);
       state.selectedId = null;
-      setStatus("Part removed", "Any extra allowance you unlocked remains available.");
+      setStatus("Part removed", "Any part you unlocked with maths stays unlocked.");
       updateControls();
     }
 
@@ -2789,7 +2790,7 @@
       state.lastResult = null;
       resetRuntimeParts();
       resetBall();
-      setStatus("Layout reset", "Starter parts restored. Previously unlocked extra parts remain available.");
+      setStatus("Layout reset", "Starter parts restored. Parts already unlocked with maths stay unlocked.");
       updateControls();
     }
 
@@ -2839,53 +2840,65 @@
         const unlocked = unlockedAllowance(type);
         const small = button.querySelector("small");
 
-        button.hidden = maximum === 0;
-        if (maximum === 0) return;
+        const unavailableInThisChallenge = freeAllowance(type) === 0 && !reserveTypes().includes(type);
+        button.hidden = maximum === 0 || unavailableInThisChallenge;
+        if (button.hidden) return;
 
         if (state.challenge.playground) {
-          small.textContent = `${current} placed · free play`;
+          small.textContent = `${current} placed · add freely`;
           button.disabled = state.running || state.replaying || questionOpen || current >= maximum;
           return;
         }
 
         const readyNow = Math.max(0, unlocked - current);
-        const mathsUnlocks = reserveUnlocksAvailableForType(type);
-        const messages = [`${current} placed`];
+        const mathsUnlockAvailable = canUnlockFromReserve(type);
+        const costText = `cost ${PART_COSTS[type]}`;
 
-        if (readyNow > 0) messages.push(`${readyNow} ready`);
-        if (mathsUnlocks > 0) messages.push(`${mathsUnlocks} more via maths`);
-
-        if (current >= maximum) {
-          small.textContent = `${current}/${maximum} placed · maximum · cost ${PART_COSTS[type]}`;
-        } else if (messages.length > 1) {
-          small.textContent = `${messages.join(" · ")} · cost ${PART_COSTS[type]}`;
+        if (atTotalLimit && (readyNow > 0 || mathsUnlockAvailable)) {
+          small.textContent = `${current} placed · board full · ${costText}`;
+        } else if (readyNow > 0) {
+          small.textContent = `${current} placed · add ${readyNow} now · ${costText}`;
+        } else if (mathsUnlockAvailable) {
+          small.textContent = `${current} placed · maths unlock available · ${costText}`;
         } else {
-          small.textContent = `${current} placed · no more available · cost ${PART_COSTS[type]}`;
+          small.textContent = `${current} placed · all used · ${costText}`;
         }
 
-        button.disabled = state.running || state.replaying || questionOpen || atTotalLimit || current >= maximum;
+        const nothingAvailable = readyNow === 0 && !mathsUnlockAvailable;
+        button.disabled = state.running || state.replaying || questionOpen || atTotalLimit || nothingAvailable;
       });
+    }
+
+    function joinPartNames(types) {
+      const names = types.map(type => PART_NAMES[type].toLowerCase());
+      if (names.length <= 1) return names[0] || "";
+      if (names.length === 2) return `${names[0]} or ${names[1]}`;
+      return `${names.slice(0, -1).join(", ")}, or ${names[names.length - 1]}`;
     }
 
     function updatePartBudget() {
       const playground = Boolean(state.challenge.playground);
       mathsCard.hidden = playground;
       if (playground) {
-        partBudgetText.textContent = `Free play · ${state.parts.length} parts placed`;
-        mathsIntro.textContent = "All parts are free in Playground.";
-        trayNote.textContent = "Playground: every part is free. Build as much nonsense as you like.";
+        partBudgetText.textContent = `${state.parts.length} parts on board · free play`;
+        mathsIntro.textContent = "All parts can be added freely in Playground.";
+        trayNote.textContent = "Playground: add any part and build as much nonsense as you like.";
         return;
       }
-      trayNote.textContent = "The part limit is fixed. Maths can unlock only the small reserve shown for this level.";
+
       const remaining = reserveRemaining();
-      partBudgetText.textContent = `Parts: ${state.parts.length}/${totalPartLimit()} · Maths reserve: ${remaining}/${mathsReserveLimit()}`;
-      if (remaining > 0) {
-        const reservePartNames = reserveTypes().map(type => PART_NAMES[type].toLowerCase()).join(" or ");
-        mathsIntro.textContent = remaining === 1
-          ? `One correct answer unlocks one final ${reservePartNames}. After that, the reserve is empty.`
-          : `Each correct answer unlocks one additional ${reservePartNames}. ${remaining} reserve unlocks remain.`;
+      const eligibleTypes = reserveTypes().filter(type => canUnlockFromReserve(type));
+      const boardIsFull = state.parts.length >= totalPartLimit();
+      partBudgetText.textContent = `${state.parts.length} ${state.parts.length === 1 ? "part" : "parts"} on board · ${remaining} maths ${remaining === 1 ? "unlock" : "unlocks"} left`;
+      trayNote.textContent = "Each button shows what you can add now. “Maths unlock available” means one correct answer is needed first.";
+
+      if (remaining <= 0 || eligibleTypes.length === 0) {
+        mathsIntro.textContent = "No maths unlocks remain. Use the parts already available in the tray.";
+      } else if (boardIsFull) {
+        mathsIntro.textContent = `You have ${remaining} maths ${remaining === 1 ? "unlock" : "unlocks"} left, but the board is full. Delete a part before adding another.`;
       } else {
-        mathsIntro.textContent = "The maths reserve is empty. Complete the level using the parts already unlocked.";
+        const partNames = joinPartNames(eligibleTypes);
+        mathsIntro.textContent = `You have ${remaining} maths ${remaining === 1 ? "unlock" : "unlocks"} left. Tap ${partNames} in the tray to answer a question and unlock one part.`;
       }
     }
 
@@ -3305,7 +3318,7 @@
       questionText.hidden = false;
       answerInput.value = "";
       mathsFeedback.textContent = requestedPartType
-        ? `Correct answer: unlock and add one ${PART_NAMES[requestedPartType].toLowerCase()}.`
+        ? `Correct answer: unlock one ${PART_NAMES[requestedPartType].toLowerCase()}. It will be added automatically.`
         : "Choose a part in the tray first.";
       mathsFeedback.dataset.kind = "";
       questionPanel.dataset.open = "true";
@@ -3357,12 +3370,12 @@
           return;
         }
         if (!unlockOneExtra(requestedPartType)) {
-          mathsFeedback.textContent = "Correct, but no reserve unlock is available.";
+          mathsFeedback.textContent = "Correct, but that extra part is no longer available.";
           mathsFeedback.dataset.kind = "error";
           updateControls();
           return;
         }
-        mathsFeedback.textContent = `Correct — the reserve ${PART_NAMES[requestedPartType].toLowerCase()} is unlocked!`;
+        mathsFeedback.textContent = `Correct — ${PART_NAMES[requestedPartType]} unlocked!`;
         mathsFeedback.dataset.kind = "success";
         playRewardSound();
         updateControls();
